@@ -217,6 +217,60 @@
     }).catch(function(){ leadSaved=false; });
   }
 
+  // ===== قفل "برو" =====
+  var proUnlocked = false;
+  var DETAIL = {
+    'حكومي':'كيفية التقديم: أونلاين أو من أقرب فرع للجهة. المستندات: بطاقة رقمية + سجل تجاري + بطاقة ضريبية + دراسة جدوى مبسّطة. المبلغ المتوقع: من عشرات لمئات الآلاف حسب النشاط. مدة الرد: 2–6 أسابيع. نصيحة: دراسة الجدوى هي أكتر سبب للرفض — جهّزها كويس.',
+    'مستثمر':'كيفية التواصل: عرض تقديمي (Pitch Deck) + تعريف من حد يعرفهم أقوى بكتير من إيميل بارد. المستندات: العرض + توقعات مالية + هيكل الملكية. النطاق المتوقع: من مئات الآلاف للملايين حسب مرحلتك. نصيحة: بيستثمروا في الفريق قبل الفكرة.',
+    'منحة':'أين تجدها: مواقع المؤسسات والمسابقات ومنصات ريادة الأعمال. الميزة: غالباً بدون حصة وبدون سداد، بس بمواعيد تقديم محددة. نصيحة: قدّم على أكتر من منحة — نسبة القبول قليلة فاللعبة أرقام.',
+    'مرن':'كيف يعمل (تمويل قائم على الإيراد): تاخد كاش وترجعه كنسبة ثابتة من مبيعاتك. الشرط: سجل مبيعات 3–6 شهور. التكلفة: رسوم ثابتة مش فائدة مركبة. السرعة: أيام لأسابيع. مناسب لو مبيعاتك متكررة.',
+    'قرض':'الشروط: سجل تجاري ومبيعات موثّقة + أحياناً ضمان. الفائدة: تختلف حسب البنك (المبادرات الحكومية أرخص). المستندات: قوائم مالية + كشف حساب + السجل. نصيحة: قارن أكتر من بنك قبل ما توقّع.',
+    'سريع':'نصيحة مهمة: حتى مع الأهل والأصحاب، اكتب اتفاق واضح (المبلغ، قرض ولا حصة، وطريقة الرد) — ده بيحمي العلاقة والمشروع مع بعض.',
+    'مسرّعة':'كيفية التقديم: عن طريق موقع المسرّعة في فترات القبول (Cohorts). بيدّوا كاش + إرشاد + شبكة علاقات مقابل حصة صغيرة. نصيحة: قوّي عرضك بأرقام جذب حقيقية ولو بسيطة.',
+    'نصيحة':'خطوة عملية: قسّم احتياجك لمراحل، اجمع أول مرحلة بس دلوقتي، واثبت النتيجة قبل ما تطلب أكتر.'
+  };
+  function getDetail(t){ return DETAIL[t] || 'جهّز مستنداتك الأساسية وتواصل مع الجهة مباشرة لمعرفة الشروط والمبالغ.'; }
+
+  function renderProSection(wrap, sources){
+    if(proUnlocked){
+      var h=el('div'); h.style.marginTop='14px';
+      h.innerHTML='<div style="color:#047857;font-weight:700;font-size:15px;margin-bottom:2px">🔓 التفاصيل الكاملة (نَفَس برو)</div>';
+      wrap.appendChild(h);
+      sources.forEach(function(x){
+        var c=el('div','src'); c.style.background='#f0fdf4';
+        c.innerHTML='<div class="top"><span class="name">'+x.n+'</span><span class="pill">'+x.t+'</span></div><div class="note" style="margin-top:6px;line-height:1.8">'+getDetail(x.t)+'</div>';
+        wrap.appendChild(c);
+      });
+    } else {
+      var pro=el('div','src pro');
+      pro.innerHTML='<div class="top"><span class="name">🔒 التفاصيل الكاملة: طريقة التقديم والمستندات والمبالغ</span><span class="pill">نَفَس برو</span></div>'+
+        '<div class="note">افتح شرح خطوة بخطوة لكل مصدر: إزاي تقدّم، المستندات المطلوبة، المبلغ المتوقع، ونصايح تزوّد فرصتك.</div>'+
+        '<button class="btn" style="margin-top:12px" onclick="startPayment()">افتح التفاصيل الكاملة · 999 ج.م</button>';
+      wrap.appendChild(pro);
+    }
+  }
+
+  function startPayment(){
+    var contact=(id('ucontact').value||'').trim();
+    var name=(id('uname').value||'').trim();
+    if(!contact){ alert('اكتب الإيميل أو الموبايل الأول فوق، عشان نربط عملية الدفع بيك.'); id('ucontact').focus(); return; }
+    saveLead();
+    fetch('/api/create-payment',{ method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({contact:contact,name:name}) })
+      .then(function(r){ return r.json(); })
+      .then(function(d){ if(d && d.url){ window.location.href=d.url; } else { alert('حصل خطأ في بدء الدفع، حاول تاني بعد شوية.'); } })
+      .catch(function(){ alert('حصل خطأ في الاتصال، حاول تاني.'); });
+  }
+
+  function checkUnlock(){
+    var contact=(id('ucontact').value||'').trim();
+    if(!contact) return;
+    if(localStorage.getItem('nafas_unlock_'+contact)==='1'){ if(!proUnlocked){ proUnlocked=true; calc(); } return; }
+    fetch('/api/check-unlock?contact='+encodeURIComponent(contact))
+      .then(function(r){ return r.json(); })
+      .then(function(d){ if(d && d.unlocked){ proUnlocked=true; localStorage.setItem('nafas_unlock_'+contact,'1'); calc(); } })
+      .catch(function(){});
+  }
+
   var SRC = {
     'مصر': {
       'لسه فكرة':[
@@ -332,9 +386,7 @@
       c.innerHTML='<div class="top"><span class="name">'+x.n+'</span><span class="pill">'+x.t+'</span></div><div class="note">'+x.note+'</div>';
       wrap.appendChild(c);
     });
-    var pro=el('div','src pro');
-    pro.innerHTML='<div class="top"><span class="name">🔒 تفاصيل التقديم والشروط والمبالغ</span><span class="pill">نَفَس برو</span></div><div class="note">روابط التقديم · شروط الأهلية · المبالغ والفوائد المتوقعة · وحد يجهّزلك ملفك ويوصّلك — في النسخة المدفوعة.</div>';
-    wrap.appendChild(pro);
+    renderProSection(wrap, sources);
 
     var steps; var urgent = rw<6 && rw<999;
     if(need<=0) steps=['ثبّت نفسك ده: راجع الأرقام كل شهر وتأكد إنها لسه صح.','لو هتكبر، جهّز أرقام آخر 6 شهور — المستثمر بيطلبها.','ابدأ علاقة بدري مع مصدر تمويل واحد قبل ما تحتاجه.'];
@@ -409,7 +461,16 @@
     });
   });
   document.querySelectorAll('input,select').forEach(function(i){ i.addEventListener('input',calc); i.addEventListener('change',calc); });
-  id('ucontact').addEventListener('blur', saveLead);
+  id('ucontact').addEventListener('blur', function(){ saveLead(); checkUnlock(); });
+  (function(){
+    try{
+      var p=new URLSearchParams(location.search);
+      var u=p.get('unlocked');
+      if(u){ localStorage.setItem('nafas_unlock_'+u,'1'); proUnlocked=true; if(!id('ucontact').value){ id('ucontact').value=u; } }
+      else { var c=(id('ucontact').value||'').trim(); if(c && localStorage.getItem('nafas_unlock_'+c)==='1') proUnlocked=true; }
+      if(p.get('pay')==='fail' || p.get('pay')==='error'){ setTimeout(function(){ alert('معلش، الدفع مكملش. تقدر تجرّب تاني من زرار «افتح التفاصيل».'); }, 300); }
+    }catch(e){}
+  })();
   calc();
 </script>
 </body>

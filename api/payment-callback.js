@@ -1,9 +1,9 @@
 // يستقبل رجوع MyFatoorah بعد الدفع، يتأكد من الحالة، ويسجّل الفتح في Supabase
 module.exports = async (req, res) => {
-  const SITE = process.env.PUBLIC_SITE_URL || ('https://' + req.headers.host);
+  const SITE = (process.env.PUBLIC_SITE_URL || ('https://' + req.headers.host)).trim();
   const paymentId = req.query.paymentId || req.query.PaymentId;
-  const BASE = process.env.MYFATOORAH_BASE || 'https://apitest.myfatoorah.com';
-  const TOKEN = process.env.MYFATOORAH_TOKEN;
+  const BASE = (process.env.MYFATOORAH_BASE || 'https://apitest.myfatoorah.com').trim();
+  const TOKEN = (process.env.MYFATOORAH_TOKEN || '').trim();
 
   const redirect = (path) => { res.writeHead(302, { Location: SITE + path }); res.end(); };
 

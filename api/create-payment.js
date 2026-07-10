@@ -7,9 +7,9 @@ module.exports = async (req, res) => {
   const name = (body.name || '').toString().trim() || 'عميل نَفَس';
   if (!contact) { res.status(400).json({ error: 'contact_required' }); return; }
 
-  const BASE = process.env.MYFATOORAH_BASE || 'https://apitest.myfatoorah.com';
-  const TOKEN = process.env.MYFATOORAH_TOKEN;
-  const SITE = process.env.PUBLIC_SITE_URL || ('https://' + req.headers.host);
+  const BASE = (process.env.MYFATOORAH_BASE || 'https://apitest.myfatoorah.com').trim();
+  const TOKEN = (process.env.MYFATOORAH_TOKEN || '').trim();
+  const SITE = (process.env.PUBLIC_SITE_URL || ('https://' + req.headers.host)).trim();
   if (!TOKEN) { res.status(500).json({ error: 'missing_myfatoorah_token' }); return; }
 
   try {
@@ -31,7 +31,12 @@ module.exports = async (req, res) => {
     if (data && data.IsSuccess && data.Data && data.Data.InvoiceURL) {
       res.status(200).json({ url: data.Data.InvoiceURL, invoiceId: data.Data.InvoiceId });
     } else {
-      res.status(400).json({ error: 'myfatoorah_error', detail: (data && data.Message) || data });
+      res.status(400).json({
+        error: 'myfatoorah_error',
+        message: data && data.Message,
+        validation: data && data.ValidationErrors,
+        raw: data
+      });
     }
   } catch (e) {
     res.status(500).json({ error: e.message });

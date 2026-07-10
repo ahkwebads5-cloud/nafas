@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>نَفَس — حاسبة طول النفس</title>
+<style>
+  :root{
+    --brand:#0e9f6e; --brand-d:#047857; --brand-l:#d1fae5;
+    --danger:#dc2626; --danger-l:#fee2e2; --warn:#d97706; --warn-l:#fef3c7;
+    --ink:#0f172a; --muted:#64748b; --line:#e2e8f0; --bg:#f8fafc; --card:#ffffff;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Segoe UI",Tahoma,system-ui,sans-serif;background:var(--bg);color:var(--ink);line-height:1.7;padding:20px}
+  .wrap{max-width:900px;margin:0 auto}
+  header{text-align:center;padding:14px 0 22px}
+  .logo{font-size:34px;font-weight:800;color:var(--brand-d);letter-spacing:1px}
+  .tag{color:var(--muted);font-size:15px;margin-top:4px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:760px){.grid{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;margin-top:18px}
+  .card h2{font-size:18px;margin-bottom:6px;color:var(--brand-d)}
+  .card .lead{font-size:13px;color:var(--muted);margin-bottom:10px}
+  label{display:block;font-size:14px;font-weight:600;margin:14px 0 6px}
+  .hint{font-weight:400;color:var(--muted);font-size:12px}
+  input,select{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:10px;font-size:16px;font-family:inherit;background:#fff}
+  input[type=number]{text-align:left;direction:ltr}
+  input:focus,select:focus{outline:none;border-color:var(--brand)}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .seg{display:flex;gap:8px;margin-top:6px}
+  .seg button{flex:1;padding:10px;border:1px solid var(--line);background:#fff;border-radius:10px;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;color:var(--muted)}
+  .seg button.on{background:var(--brand);border-color:var(--brand);color:#fff}
+  .big{font-size:15px;color:var(--muted)}
+  .runway-num{font-size:52px;font-weight:800;line-height:1.1;color:var(--brand-d)}
+  .runway-num.bad{color:var(--danger)}
+  .sub{font-size:15px;color:var(--muted);margin-top:2px}
+  .raise{margin-top:16px;padding:16px;border-radius:12px;background:var(--brand-l);border:1px solid #a7f3d0}
+  .raise .amt{font-size:28px;font-weight:800;color:var(--brand-d)}
+  .bar{display:flex;height:24px;border-radius:8px;overflow:hidden;margin:16px 0 6px;border:1px solid var(--line)}
+  .bar .safe{background:var(--brand)}
+  .bar .gap{background:repeating-linear-gradient(45deg,var(--danger-l),var(--danger-l) 6px,#fecaca 6px,#fecaca 12px)}
+  .barlbl{display:flex;justify-content:space-between;font-size:12px;color:var(--muted)}
+  .risk{display:flex;gap:10px;align-items:flex-start;padding:10px 12px;border-radius:10px;margin-top:10px;font-size:14px}
+  .risk.d{background:var(--danger-l)} .risk.w{background:var(--warn-l)} .risk.g{background:var(--brand-l)}
+  .risk b{font-weight:700}
+  .dot{width:9px;height:9px;border-radius:50%;margin-top:7px;flex:none}
+  .dot.d{background:var(--danger)} .dot.w{background:var(--warn)} .dot.g{background:var(--brand)}
+  .src{border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:10px}
+  .src .top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .src .name{font-weight:700;font-size:15px}
+  .src .pill{font-size:12px;font-weight:600;color:var(--brand-d);background:var(--brand-l);padding:3px 10px;border-radius:20px;white-space:nowrap}
+  .src .note{font-size:13px;color:var(--muted);margin-top:4px}
+  .src.pro{border-style:dashed;border-color:#a7f3d0;background:#f0fdf4}
+  .src.pro .pill{background:var(--brand);color:#fff}
+  .steps{counter-reset:s}
+  .step{display:flex;gap:12px;align-items:flex-start;margin-top:12px}
+  .step .n{counter-increment:s;background:var(--brand);color:#fff;width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;flex:none}
+  .step .n::before{content:counter(s)}
+  .step .txt{font-size:14px}
+  .btn{display:inline-flex;align-items:center;gap:8px;background:var(--brand);color:#fff;border:none;border-radius:12px;padding:14px 22px;font-family:inherit;font-size:16px;font-weight:700;cursor:pointer;margin-top:16px}
+  .btn:hover{background:var(--brand-d)}
+  .btnrow{text-align:center}
+  footer{text-align:center;color:var(--muted);font-size:13px;margin-top:26px}
+
+  /* تقرير الطباعة */
+  #report{display:none}
+  @media print{
+    body{padding:0;background:#fff}
+    .wrap{display:none}
+    #report{display:block}
+    @page{margin:16mm}
+  }
+  #report{direction:rtl;text-align:right;color:#0f172a;font-family:"Segoe UI",Tahoma,system-ui,sans-serif}
+  .rep-head{background:var(--brand-d);color:#fff;padding:22px 26px;border-radius:14px;display:flex;justify-content:space-between;align-items:flex-end;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .rep-head .r-logo{font-size:30px;font-weight:800;letter-spacing:1px}
+  .rep-head .r-tag{font-size:13px;opacity:.9;margin-top:2px}
+  .rep-head .r-meta{font-size:12px;text-align:left;opacity:.95;line-height:1.9}
+  .rep-h2{font-size:17px;color:var(--brand-d);font-weight:700;margin:22px 0 8px;border-bottom:2px solid var(--brand-l);padding-bottom:5px}
+  .rep-hero{display:flex;gap:14px;margin-top:12px}
+  .rep-hero .box{flex:1;border:1px solid var(--line);border-radius:12px;padding:14px;text-align:center}
+  .rep-hero .box .k{font-size:12px;color:var(--muted)}
+  .rep-hero .box .v{font-size:26px;font-weight:800;color:var(--brand-d);margin-top:2px}
+  .rep-hero .box.warn .v{color:var(--danger)}
+  table.rep-table{width:100%;border-collapse:collapse;direction:rtl;margin-top:6px;font-size:14px}
+  table.rep-table th,table.rep-table td{border:1px solid var(--line);padding:9px 12px;text-align:right}
+  table.rep-table th{background:var(--brand-l);color:var(--brand-d);font-weight:700;width:42%;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .rep-src{border:1px solid var(--line);border-radius:10px;padding:11px 13px;margin-top:8px}
+  .rep-src .n{font-weight:700;font-size:14px}
+  .rep-src .n span{font-size:11px;font-weight:600;color:var(--brand-d);background:var(--brand-l);padding:2px 9px;border-radius:20px;margin-right:8px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .rep-src .note{font-size:12.5px;color:var(--muted);margin-top:3px}
+  .rep-step{margin-top:7px;font-size:14px;padding-right:22px;position:relative}
+  .rep-step b{color:var(--brand-d)}
+  .rep-foot{margin-top:26px;border-top:1px solid var(--line);padding-top:12px;font-size:11.5px;color:var(--muted);line-height:1.8}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="logo">نَفَس</div>
+    <div class="tag">اعرف مشروعك «طول نفسه» قد إيه — وكام محتاج، وتجيبه منين، وتعمل إيه</div>
+  </header>
+
+  <div class="card" style="margin-top:0">
+    <h2>ابدأ بمعلوماتك</h2>
+    <div class="lead">علشان نبعتلك تقريرك ونساعدك في الخطوة الجاية.</div>
+    <div class="two">
+      <div><label>اسمك</label><input type="text" id="uname" placeholder="الاسم أو اسم المشروع"></div>
+      <div><label>إيميل أو موبايل</label><input type="text" id="ucontact" placeholder="للتواصل وإرسال التقرير"></div>
+    </div>
+    <div id="leadStatus" class="hint" style="margin-top:8px;color:#047857"></div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h2>عن مشروعك</h2>
+      <div class="lead">علشان الرد يطلعلك إنت بالذات مش رد عام.</div>
+      <label>القطاع</label>
+      <select id="sector">
+        <option>تجارة إلكترونية</option><option>خدمات</option><option>مطعم / كافيه</option>
+        <option>تطبيق / سوفت وير</option><option>تصنيع</option><option>تجارة تجزئة</option><option>أخرى</option>
+      </select>
+      <label>مرحلة المشروع</label>
+      <select id="stage">
+        <option>لسه فكرة</option><option selected>بدأت من قريّب</option><option>بتنمو</option><option>ثابتة / مربحة</option>
+      </select>
+      <label>البلد <span class="hint">(بتحدد مصادر التمويل)</span></label>
+      <select id="country">
+        <option selected>مصر</option><option>السعودية</option><option>الإمارات</option>
+        <option>الكويت</option><option>قطر</option><option>البحرين</option><option>عُمان</option>
+        <option>الأردن</option><option>لبنان</option><option>العراق</option><option>فلسطين</option>
+        <option>المغرب</option><option>الجزائر</option><option>تونس</option><option>ليبيا</option>
+        <option>السودان</option><option>اليمن</option><option>دولة عربية أخرى</option>
+      </select>
+      <label>هدف الأمان</label>
+      <div class="seg" id="target">
+        <button data-m="12">12 شهر</button><button data-m="18" class="on">18 شهر</button><button data-m="24">24 شهر</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>أرقامك</h2>
+      <div class="lead">أرقام تقريبية كفاية.</div>
+      <label>الكاش المتاح دلوقتي <span class="hint">(اللي في إيدك)</span></label>
+      <input type="number" id="cash" value="200000" min="0">
+      <div class="two">
+        <div><label>المصاريف الشهرية</label><input type="number" id="exp" value="60000" min="0"></div>
+        <div><label>الإيراد الشهري</label><input type="number" id="rev" value="25000" min="0"></div>
+      </div>
+      <label>نمو الإيراد شهرياً % <span class="hint">(متوسط الزيادة كل شهر)</span></label>
+      <input type="number" id="growth" value="5" min="0" step="1">
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>نفس مشروعك</h2>
+    <div class="grid" style="align-items:center">
+      <div>
+        <div class="big">النفس الحالي</div>
+        <div class="runway-num" id="rwNum">—</div>
+        <div class="sub" id="rwDate"></div>
+        <div class="bar" id="bar"></div>
+        <div class="barlbl"><span>دلوقتي</span><span id="tgtLbl">هدف 18 شهر</span></div>
+      </div>
+      <div>
+        <div class="raise" style="margin-top:0">
+          <div class="big">علشان توصل لهدفك محتاج تجمع</div>
+          <div class="amt" id="raise">—</div>
+        </div>
+        <div id="risks"></div>
+      </div>
+    </div>
+    <div class="btnrow"><button class="btn" onclick="downloadReport()">📄 حمّل تقريرك (PDF)</button></div>
+  </div>
+
+  <div class="card">
+    <h2 id="srcTitle">منين تجيب الكاش؟</h2>
+    <div class="lead" id="srcLead">مصادر مناسبة لمرحلتك وبلدك.</div>
+    <div id="sources"></div>
+  </div>
+
+  <div class="card">
+    <h2>اعمل إيه دلوقتي؟</h2>
+    <div class="steps" id="steps"></div>
+  </div>
+
+  <footer>نموذج تجريبي (MVP) — «نَفَس» · النسخة الكاملة قريباً</footer>
+</div>
+
+<div id="report"></div>
+
+<script>
+  var targetM = 18;
+  var fmt = function(n){ return Math.round(n).toLocaleString('en-US') + " ج.م"; };
+
+  var SB_URL = "https://valjagwyzsnprixbtaiv.supabase.co";
+  var SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhbGphZ3d5enNucHJpeGJ0YWl2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2OTExODIsImV4cCI6MjA5OTI2NzE4Mn0.XVuQU7WicI0gQblv0F_j1oygjkfW_4RJlmbUFaH7I9Y";
+  var leadSaved = false;
+  function saveLead(){
+    if(leadSaved) return;
+    var contact = (id('ucontact').value || "").trim();
+    if(!contact) return;
+    var d = LAST || {};
+    leadSaved = true;
+    fetch(SB_URL + "/rest/v1/leads", {
+      method:"POST",
+      headers:{ "apikey":SB_KEY, "Authorization":"Bearer "+SB_KEY, "Content-Type":"application/json", "Prefer":"return=minimal" },
+      body: JSON.stringify({
+        name: id('uname').value || null,
+        contact: contact,
+        sector: d.sector, stage: d.stage, country: d.country,
+        cash: d.cash, expenses: d.exp, revenue: d.rev, growth: d.growth,
+        target_months: targetM, runway_months: d.rw, amount_needed: d.need
+      })
+    }).then(function(r){
+      if(r.ok){ var s=id('leadStatus'); if(s) s.textContent="✓ بياناتك اتسجّلت — هنبعتلك تحديثات نَفَس."; }
+      else { leadSaved=false; }
+    }).catch(function(){ leadSaved=false; });
+  }
+
+  var SRC = {
+    'مصر': {
+      'لسه فكرة':[
+        {n:'مسابقات ومنح ريادة الأعمال',t:'منحة',note:'فلوس من غير ما تدّي حصة — دوّر على مسابقات زي RiseUp ومنح المؤسسات.'},
+        {n:'مسرّعات الأعمال',t:'مسرّعة',note:'Flat6Labs · Falak Startups · AUC V-Lab — كاش وإرشاد مقابل حصة صغيرة.'},
+        {n:'أهل وأصحاب (FFF)',t:'سريع',note:'أسرع مصدر للمبالغ الصغيرة في أول الطريق.'}
+      ],
+      'بدأت من قريّب':[
+        {n:'جهاز تنمية المشروعات',t:'حكومي',note:'تمويل حكومي ميسّر بفوائد منخفضة للمشروعات الصغيرة.'},
+        {n:'مبادرة البنك المركزي للـ SMEs',t:'حكومي',note:'قروض بفائدة مدعومة عبر البنوك للصناعة والخدمات.'},
+        {n:'مستثمرون ملائكيون',t:'مستثمر',note:'Cairo Angels · Alexandria Angels · HIMangel — لو عندك جذب أولي.'},
+        {n:'تمويل قائم على الإيراد',t:'مرن',note:'تاخد كاش دلوقتي وترجعه كنسبة من مبيعاتك — من غير حصة.'}
+      ],
+      'بتنمو':[
+        {n:'مستثمرون ملائكيون / Pre-seed',t:'مستثمر',note:'Cairo Angels · A15 · HIMangel — دي مرحلتهم بالظبط.'},
+        {n:'تمويل قائم على الإيراد',t:'مرن',note:'من غير تنازل عن حصة — بترجعه من الإيراد الشهري.'},
+        {n:'قرض بنكي للـ SME',t:'قرض',note:'لو عندك سجل مبيعات ومستندات جاهزة، ده أرخص تمويل.'}
+      ],
+      'ثابتة / مربحة':[
+        {n:'صناديق الاستثمار الجريء',t:'مستثمر',note:'Sawari · Algebra · Disruptech · Nclude — لو بتكبر بسرعة.'},
+        {n:'قرض بنكي / حد ائتماني',t:'قرض',note:'أرخص تمويل طالما أرقامك قوية ومستنداتك جاهزة.'},
+        {n:'تمويل قائم على الإيراد',t:'مرن',note:'لتغطية رأس المال العامل من غير حصة.'}
+      ]
+    },
+    'السعودية':{generic:[
+      {n:'منشآت (الهيئة العامة للمنشآت)',t:'حكومي',note:'برامج تمويل ودعم للمنشآت الصغيرة والمتوسطة.'},
+      {n:'برنامج كفالة',t:'حكومي',note:'ضمان حكومي يسهّل حصولك على قرض بنكي.'},
+      {n:'مسرّعات وصناديق',t:'مستثمر',note:'Wa’ed · Sanabil · Raed · STV — حسب مرحلتك.'},
+      {n:'شبكات المستثمرين الملائكيين',t:'مستثمر',note:'Sirb وغيرها — للمراحل المبكرة.'}
+    ]},
+    'الإمارات':{generic:[
+      {n:'صندوق خليفة / دبي للـ SME',t:'حكومي',note:'تمويل ودعم حكومي لرواد الأعمال المواطنين والمقيمين.'},
+      {n:'حاضنات ومسرّعات',t:'مسرّعة',note:'Hub71 · in5 · MBRIF — كاش وشبكة علاقات.'},
+      {n:'صناديق استثمار إقليمية',t:'مستثمر',note:'Shorooq · BECO · Wamda — للمراحل المتقدمة.'},
+      {n:'تمويل قائم على الإيراد',t:'مرن',note:'من غير حصة — بترجعه من المبيعات.'}
+    ]},
+    'دولة عربية أخرى':{generic:[
+      {n:'برامج التمويل الحكومية المحلية',t:'حكومي',note:'دوّر على صندوق دعم المشروعات الصغيرة في بلدك.'},
+      {n:'مسرّعات الأعمال',t:'مسرّعة',note:'كاش وإرشاد مقابل حصة صغيرة.'},
+      {n:'مستثمرون ملائكيون',t:'مستثمر',note:'شبكات المستثمرين المحلية والإقليمية.'},
+      {n:'تمويل قائم على الإيراد',t:'مرن',note:'مناسب لو مبيعاتك ثابتة.'}
+    ]}
+  };
+
+  function runwayMonths(cash, exp, rev, growth){
+    var bal=cash, r=rev;
+    for(var m=1;m<=120;m++){ bal += r-exp; r*=(1+growth/100); if(bal<=0) return m; }
+    return 999;
+  }
+  function minBalance(cash, exp, rev, growth, months){
+    var bal=cash, r=rev, mn=cash;
+    for(var m=1;m<=months;m++){ bal += r-exp; r*=(1+growth/100); if(bal<mn) mn=bal; }
+    return mn;
+  }
+  function monthName(offset){
+    var d=new Date(); d.setMonth(d.getMonth()+offset);
+    var mo=["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
+    return mo[d.getMonth()]+" "+d.getFullYear();
+  }
+  function todayStr(){
+    var d=new Date();
+    var mo=["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
+    return d.getDate()+" "+mo[d.getMonth()]+" "+d.getFullYear();
+  }
+
+  function recommendSources(country, stage, need){
+    var g = SRC[country] || SRC['دولة عربية أخرى'];
+    var base = (g[stage] || g.generic || []).slice();
+    var out = [];
+    if(need>0 && need<300000) out.push({n:'تمويل متناهي الصغر أو أهل وأصحاب',t:'سريع',note:'المبلغ صغير نسبياً — دي أسرع وأبسط طريقة تبدأ بيها.'});
+    out = out.concat(base);
+    if(need>=3000000 && (stage==='لسه فكرة'||stage==='بدأت من قريّب')) out.push({n:'قسّم التمويل لجولات',t:'نصيحة',note:'المبلغ كبير على مرحلتك — اجمع لـ6–9 شهور الأول، اثبت النتيجة، وبعدها ارفع جولة أكبر.'});
+    return out.slice(0,4);
+  }
+
+  var LAST = {};
+
+  function calc(){
+    var cash=+val('cash'), exp=+val('exp'), rev=+val('rev'), growth=+val('growth');
+    var stage=sel('stage'), country=sel('country'), sector=sel('sector');
+
+    var rw = runwayMonths(cash,exp,rev,growth);
+    var numEl=id('rwNum'), dateEl=id('rwDate');
+    if(rw>=999){ numEl.textContent="مؤمّن ✓"; numEl.className="runway-num"; dateEl.textContent="مشروعك بيغطّي مصاريفه — مفيش خطر نفاد كاش قريب."; }
+    else { numEl.textContent=rw+" شهر"; numEl.className="runway-num"+(rw<6?" bad":""); dateEl.textContent="الكاش هيخلص تقريباً في "+monthName(rw); }
+
+    var need = Math.max(0, -minBalance(cash,exp,rev,growth,targetM));
+    id('raise').textContent = need<=0 ? "0 ج.م — إنت مغطّي ✓" : fmt(need);
+
+    var shown = rw>=999 ? targetM : Math.min(rw,targetM);
+    var safePct = Math.max(3, Math.min(100,(shown/targetM)*100));
+    var bar=id('bar'); bar.innerHTML="";
+    var s=el('div','safe'); s.style.width=safePct+"%"; bar.appendChild(s);
+    if(safePct<100){ var gp=el('div','gap'); gp.style.width=(100-safePct)+"%"; bar.appendChild(gp); }
+    id('tgtLbl').textContent="هدف "+targetM+" شهر";
+
+    var risks=[];
+    if(rw<6 && rw<999) risks.push(['d','خطر عالي','نفسك أقل من 6 شهور. ابدأ تجميع تمويل من دلوقتي.']);
+    else if(rw<targetM && rw<999) risks.push(['w','تحت الهدف','نفسك أقصر من هدفك بـ'+(targetM-rw)+' شهر.']);
+    else risks.push(['g','في الأمان','نفسك يغطّي هدفك — ركّز على النمو.']);
+    if(stage==='لسه فكرة') risks.push(['w','قبل التمويل','إنت لسه فكرة — أسهل كاش دلوقتي منح ومسرّعات مش قروض.']);
+    else if(rev>=exp) risks.push(['g','قرب التعادل','إيرادك بيقارب مصاريفك — كل نمو بيطوّل نفسك كتير.']);
+    else if(growth===0) risks.push(['w','إيراد ثابت','إيرادك مش بينمو — جرّب ترفع النمو ولو شوية.']);
+    var box=id('risks'); box.innerHTML="";
+    risks.slice(0,2).forEach(function(r){ var d=el('div','risk '+r[0]); d.innerHTML='<span class="dot '+r[0]+'"></span><div><b>'+r[1]+':</b> '+r[2]+'</div>'; box.appendChild(d); });
+
+    var sources = recommendSources(country,stage,need);
+    var st=id('srcTitle'), lead=id('srcLead'), wrap=id('sources'); wrap.innerHTML="";
+    if(need<=0){ st.textContent="مش محتاج تمويل دلوقتي ✓"; lead.textContent="نفسك يغطّي هدفك. لو هتجمع للنمو مش للبقاء، دي خياراتك:"; }
+    else { st.textContent="منين تجيب الـ"+fmt(need)+"؟"; lead.textContent="مصادر مناسبة لمرحلة «"+stage+"» في "+country+"."; }
+    sources.forEach(function(x){
+      var c=el('div','src');
+      c.innerHTML='<div class="top"><span class="name">'+x.n+'</span><span class="pill">'+x.t+'</span></div><div class="note">'+x.note+'</div>';
+      wrap.appendChild(c);
+    });
+    var pro=el('div','src pro');
+    pro.innerHTML='<div class="top"><span class="name">🔒 تفاصيل التقديم والشروط والمبالغ</span><span class="pill">نَفَس برو</span></div><div class="note">روابط التقديم · شروط الأهلية · المبالغ والفوائد المتوقعة · وحد يجهّزلك ملفك ويوصّلك — في النسخة المدفوعة.</div>';
+    wrap.appendChild(pro);
+
+    var steps; var urgent = rw<6 && rw<999;
+    if(need<=0) steps=['ثبّت نفسك ده: راجع الأرقام كل شهر وتأكد إنها لسه صح.','لو هتكبر، جهّز أرقام آخر 6 شهور — المستثمر بيطلبها.','ابدأ علاقة بدري مع مصدر تمويل واحد قبل ما تحتاجه.'];
+    else if(urgent) steps=['النهاردة: قلّل أكبر مصروف مؤقت علشان تكسب أسابيع.','كلّم أسرع مصدرين فوق (أهل/أصحاب/جهة حكومية) الأسبوع ده.','جهّز ملف أرقام بسيط: كاش، مصاريف، إيراد، والمبلغ المطلوب.'];
+    else steps=['جهّز «ملف الجاهزية»: أرقامك + خطة الـ'+targetM+' شهر + السجل التجاري.','اختار مصدرين من فوق يناسبوا مرحلتك وابدأ تتواصل.','اطلب المبلغ الصح ('+fmt(need)+') مش أقل — علشان متقعش في أزمة تاني.'];
+    var ss=id('steps'); ss.innerHTML="";
+    steps.forEach(function(t){ var d=el('div','step'); d.innerHTML='<div class="n"></div><div class="txt">'+t+'</div>'; ss.appendChild(d); });
+
+    LAST = {cash:cash,exp:exp,rev:rev,growth:growth,stage:stage,country:country,sector:sector,rw:rw,need:need,sources:sources,steps:steps};
+  }
+
+  function buildReport(){
+    var d=LAST;
+    var name = id('uname').value || "—";
+    var contact = id('ucontact').value || "—";
+    var rwTxt = d.rw>=999 ? "مؤمّن" : d.rw+" شهر";
+    var runoutTxt = d.rw>=999 ? "لا يوجد خطر قريب" : monthName(d.rw);
+    var needTxt = d.need<=0 ? "غير محتاج تمويل حالياً" : fmt(d.need);
+
+    var rows = [
+      ['اسم صاحب المشروع', name],
+      ['وسيلة التواصل', contact],
+      ['القطاع', d.sector],
+      ['مرحلة المشروع', d.stage],
+      ['البلد', d.country],
+      ['الكاش المتاح حالياً', fmt(d.cash)],
+      ['المصاريف الشهرية', fmt(d.exp)],
+      ['الإيراد الشهري', fmt(d.rev)],
+      ['نمو الإيراد شهرياً', d.growth+"%"],
+      ['هدف الأمان', targetM+" شهر"]
+    ];
+    var tbody = rows.map(function(r){ return '<tr><th>'+r[0]+'</th><td>'+r[1]+'</td></tr>'; }).join('');
+
+    var srcHtml = d.sources.map(function(x){
+      return '<div class="rep-src"><div class="n">'+x.n+' <span>'+x.t+'</span></div><div class="note">'+x.note+'</div></div>';
+    }).join('');
+
+    var stepsHtml = d.steps.map(function(t,i){ return '<div class="rep-step"><b>'+(i+1)+'.</b> '+t+'</div>'; }).join('');
+
+    id('report').innerHTML =
+      '<div class="rep-head"><div><div class="r-logo">نَفَس</div><div class="r-tag">تقرير طول نفس مشروعك</div></div>'+
+      '<div class="r-meta">التاريخ: '+todayStr()+'<br>أُعدّ لـ: '+name+'</div></div>'+
+
+      '<div class="rep-hero">'+
+        '<div class="box'+(d.rw<6&&d.rw<999?' warn':'')+'"><div class="k">نفس المشروع الحالي</div><div class="v">'+rwTxt+'</div></div>'+
+        '<div class="box"><div class="k">الكاش يخلص تقريباً في</div><div class="v" style="font-size:18px">'+runoutTxt+'</div></div>'+
+        '<div class="box"><div class="k">المطلوب تجميعه لهدف '+targetM+' شهر</div><div class="v">'+needTxt+'</div></div>'+
+      '</div>'+
+
+      '<div class="rep-h2">ملخص بيانات المشروع</div>'+
+      '<table class="rep-table"><tbody>'+tbody+'</tbody></table>'+
+
+      '<div class="rep-h2">منين تجيب التمويل</div>'+srcHtml+
+
+      '<div class="rep-h2">خطة العمل — اعمل إيه دلوقتي</div>'+stepsHtml+
+
+      '<div class="rep-foot">هذا التقرير تقديري ويعتمد على الأرقام التي أدخلتها، والغرض منه المساعدة في التخطيط وليس نصيحة مالية أو استثمارية ملزمة. '+
+      'تم إنشاؤه بواسطة «نَفَس» — أداة تخطيط طول النفس المالي لرواد الأعمال.</div>';
+  }
+
+  function downloadReport(){ saveLead(); buildReport(); window.print(); }
+
+  function val(i){ return id(i).value || 0; }
+  function sel(i){ return id(i).value; }
+  function id(i){ return document.getElementById(i); }
+  function el(tag,cls){ var e=document.createElement(tag); if(cls) e.className=cls; return e; }
+
+  document.querySelectorAll('#target button').forEach(function(b){
+    b.addEventListener('click',function(){
+      document.querySelectorAll('#target button').forEach(function(x){x.classList.remove('on')});
+      b.classList.add('on'); targetM=+b.dataset.m; calc();
+    });
+  });
+  document.querySelectorAll('input,select').forEach(function(i){ i.addEventListener('input',calc); i.addEventListener('change',calc); });
+  id('ucontact').addEventListener('blur', saveLead);
+  calc();
+</script>
+</body>
+</html>

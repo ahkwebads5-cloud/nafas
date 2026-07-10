@@ -10,6 +10,7 @@ module.exports = async (req, res) => {
   const BASE = (process.env.MYFATOORAH_BASE || 'https://apitest.myfatoorah.com').trim();
   const TOKEN = (process.env.MYFATOORAH_TOKEN || '').trim();
   const SITE = (process.env.PUBLIC_SITE_URL || ('https://' + req.headers.host)).trim();
+  const AMOUNT = Number((process.env.PRO_PRICE || '999').toString().trim()) || 999;
   if (!TOKEN) { res.status(500).json({ error: 'missing_myfatoorah_token' }); return; }
 
   try {
@@ -17,7 +18,7 @@ module.exports = async (req, res) => {
       method: 'POST',
       headers: { 'Authorization': 'Bearer ' + TOKEN, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        InvoiceValue: 999,
+        InvoiceValue: AMOUNT,
         CustomerName: name,
         DisplayCurrencyIso: 'EGP',
         NotificationOption: 'LNK',

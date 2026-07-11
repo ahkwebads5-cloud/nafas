@@ -58,8 +58,9 @@ module.exports = async (req, res) => {
       body: JSON.stringify({ model: MODEL, max_tokens: 4000, messages: [{ role: 'user', content: prompt }] })
     });
     const d = await r.json();
-    if (d && d.content && d.content[0] && d.content[0].text) {
-      let html = d.content[0].text.replace(/^```html\s*/i, '').replace(/```$/,'').trim();
+    const textBlock = d && Array.isArray(d.content) ? d.content.find(function(c){ return c.type === 'text'; }) : null;
+    if (textBlock && textBlock.text) {
+      let html = textBlock.text.replace(/^```html\s*/i, '').replace(/```$/,'').trim();
       res.status(200).json({ html: html });
     } else {
       res.status(400).json({ error: 'anthropic_error', detail: (d && d.error) || d });

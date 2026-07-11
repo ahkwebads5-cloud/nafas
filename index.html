@@ -294,17 +294,77 @@
     var c=id('studioCard'); if(!c) return;
     c.style.display = proUnlocked ? 'block' : 'none';
     var b=id('studioBtns'); if(b && !b.dataset.done){ b.dataset.done='1';
-      STUDIO.forEach(function(s){ var btn=el('button','btn'); btn.style.cssText='margin:6px 6px 0 0;padding:11px 16px;font-size:14px'; btn.textContent=s.t; btn.onclick=function(){ generateDoc(s.k, s.t); }; b.appendChild(btn); });
+      STUDIO.forEach(function(s){ var btn=el('button','btn'); btn.style.cssText='margin:6px 6px 0 0;padding:11px 16px;font-size:14px'; btn.textContent=s.t; btn.onclick=function(){ openIntake(s.k, s.t); }; b.appendChild(btn); });
     }
   }
-  function generateDoc(docType, label){
+  var INTAKE = {
+    readiness: [
+      {k:'product', l:'بتقدّم إيه بالظبط؟ (منتج/خدمة في جملة)', t:'text'},
+      {k:'team_size', l:'حجم الفريق الحالي؟', t:'text'},
+      {k:'docs_have', l:'المستندات المتوفرة عندك؟ (سجل تجاري، ضريبية، قوائم مالية...)', t:'text'},
+      {k:'traction', l:'أي إنجاز أو أرقام تثبت الجذب؟ (اختياري)', t:'text'}
+    ],
+    feasibility: [
+      {k:'product', l:'وصف المنتج/الخدمة', t:'textarea'},
+      {k:'customer', l:'مين العميل المستهدف بالظبط؟', t:'text'},
+      {k:'price', l:'متوسط سعر المنتج/الخدمة (ج.م)؟', t:'text'},
+      {k:'cost', l:'أكبر بند تكلفة عندك؟', t:'text'},
+      {k:'competitor', l:'أهم منافس أو البديل الحالي للعميل؟', t:'text'},
+      {k:'market', l:'السوق/المنطقة اللي بتستهدفها؟', t:'text'}
+    ],
+    deck: [
+      {k:'problem', l:'المشكلة اللي بتحلّها؟', t:'text'},
+      {k:'solution', l:'الحل المميز بتاعك؟', t:'textarea'},
+      {k:'traction', l:'أي جذب/أرقام حالية؟ (اختياري)', t:'text'},
+      {k:'team', l:'مين الفريق وخبرتهم باختصار؟', t:'text'},
+      {k:'use_funds', l:'هتستخدم التمويل في إيه؟', t:'text'},
+      {k:'competitor', l:'المنافس أو البديل الحالي؟', t:'text'}
+    ],
+    emails: [
+      {k:'pitch_line', l:'جملة تعريف مشروعك؟', t:'text'},
+      {k:'achievement', l:'أقوى إنجاز أو رقم عندك؟', t:'text'},
+      {k:'your_name', l:'اسمك وصفتك؟', t:'text'}
+    ],
+    captable: [
+      {k:'founders', l:'المؤسسين ونِسبهم الحالية؟ (مثال: أنا 60% وشريكي 40%)', t:'text'},
+      {k:'prev_investment', l:'فيه استثمار سابق؟ (اكتب التفاصيل أو «لا»)', t:'text'},
+      {k:'valuation', l:'توقّع التقييم لو عندك (أو سيبها فاضية ونقدّرها)', t:'text'}
+    ]
+  };
+
+  function openIntake(docType, label){
+    var contact=(id('ucontact').value||'').trim();
+    if(!contact){ alert('اكتب الإيميل أو الموبايل فوق الأول.'); return; }
+    id('studioStatus').textContent='';
+    var fields=INTAKE[docType]||[];
+    var h='<div style="border:1px solid #a7f3d0;border-radius:12px;padding:16px;margin-top:14px;background:#f0fdf4">'+
+      '<div style="font-weight:700;color:#047857">أسئلة سريعة عشان «'+label+'» يطلع بتاعك إنت</div>'+
+      '<div class="hint" style="margin-bottom:6px">جاوب باختصار — كل ما تدّي تفاصيل أكتر، الملف يطلع أقوى.</div>';
+    fields.forEach(function(f){
+      h+='<label>'+f.l+'</label>';
+      if(f.t==='textarea') h+='<textarea id="iq_'+f.k+'" rows="2" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:15px"></textarea>';
+      else h+='<input type="text" id="iq_'+f.k+'" style="width:100%;padding:10px;border:1px solid var(--line);border-radius:8px;font-family:inherit;font-size:15px">';
+    });
+    h+='<div style="margin-top:14px"><button class="btn" onclick="submitIntake(\''+docType+'\')">🚀 جهّز الملف</button></div></div>';
+    id('studioOutput').innerHTML=h;
+    window._curLabel = label;
+  }
+
+  function submitIntake(docType){
+    var fields=INTAKE[docType]||[];
+    var answers={};
+    fields.forEach(function(f){ var e2=id('iq_'+f.k); if(e2 && e2.value.trim()) answers[f.l]=e2.value.trim(); });
+    doGenerate(docType, window._curLabel||'الملف', answers);
+  }
+
+  function doGenerate(docType, label, answers){
     var contact=(id('ucontact').value||'').trim();
     if(!contact){ alert('اكتب الإيميل أو الموبايل فوق الأول.'); return; }
     var st=id('studioStatus'); st.textContent='⏳ بنجهّز «'+label+'»... ممكن ياخد لحد دقيقة.';
     id('studioOutput').innerHTML='';
     var d=LAST||{};
     fetch('/api/generate',{ method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ contact:contact, docType:docType, data:{ name:id('uname').value, sector:d.sector, stage:d.stage, country:d.country, cash:d.cash, expenses:d.exp, revenue:d.rev, growth:d.growth, targetMonths:targetM, runway:d.rw, needed:d.need } }) })
+      body:JSON.stringify({ contact:contact, docType:docType, answers:answers||{}, data:{ name:id('uname').value, sector:d.sector, stage:d.stage, country:d.country, cash:d.cash, expenses:d.exp, revenue:d.rev, growth:d.growth, targetMonths:targetM, runway:d.rw, needed:d.need } }) })
       .then(function(r){ return r.json(); })
       .then(function(res){ if(res && res.html){ st.textContent=''; showGenerated(label, res.html); } else { st.textContent='حصل خطأ في التجهيز، حاول تاني.'; } })
       .catch(function(){ st.textContent='حصل خطأ في الاتصال، حاول تاني.'; });

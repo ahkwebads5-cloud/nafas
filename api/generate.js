@@ -16,7 +16,7 @@ function ctx(d){
     '- المبلغ المطلوب تجميعه: ' + num(d.needed) + ' ج.م\n';
 }
 
-var COMMON = '\n\nاكتب المخرجات بالعربية الفصحى المبسّطة الاحترافية على هيئة HTML نظيف (fragment فقط، بدون <html> أو <head> أو <body> أو <script> أو ```). استخدم <h3> للعناوين، و<p> و<ul><li> و<table> عند الحاجة. اجعل المحتوى محدداً وواقعياً ومبنياً على أرقام المشروع، وتجنّب الكلام العام والحشو. لا تكتب أي شيء خارج المستند نفسه.';
+var COMMON = '\n\nاكتب المخرجات بالعربية الفصحى المبسّطة الاحترافية على هيئة HTML نظيف (fragment فقط، بدون <html> أو <head> أو <body> أو <script> أو ```). استخدم <h3> للعناوين، و<p> و<ul><li> و<table> عند الحاجة. اجعل المحتوى محدداً وواقعياً ومبنياً على أرقام المشروع وتفاصيل صاحبه. اعتمد أساساً على التفاصيل التي قدّمها صاحب المشروع ولا تخالفها. إذا كانت معلومة مهمة غير متوفرة، ضع افتراضاً واقعياً واذكر بوضوح أنه [افتراض] بين قوسين، ولا تخترع أرقاماً دقيقة وتقدّمها كأنها حقائق مؤكدة. تجنّب الكلام العام والحشو. لا تكتب أي شيء خارج المستند نفسه.';
 
 var TASKS = {
   readiness: 'جهّز «ملف جاهزية للتمويل» احترافي يشمل: ملخص تنفيذي قصير، تقييم للوضع المالي بالأرقام، درجة جاهزية من 100 مع تبرير مختصر، جدول checklist للمستندات (المتوفر غالباً والناقص المطلوب لجولة تمويل)، وأهم 3 خطوات عملية لرفع الجاهزية.',
@@ -49,7 +49,14 @@ module.exports = async (req, res) => {
   if (!KEY) { res.status(500).json({ error: 'missing_anthropic_key' }); return; }
   const MODEL = (process.env.ANTHROPIC_MODEL || 'claude-sonnet-5').trim();
 
-  const prompt = ctx(data) + '\nالمطلوب: ' + TASKS[docType] + COMMON;
+  const answers = body.answers || {};
+  const aKeys = Object.keys(answers).filter(function(k){ return answers[k] && String(answers[k]).trim(); });
+  let answersText = '';
+  if (aKeys.length) {
+    answersText = '\n\nتفاصيل إضافية قدّمها صاحب المشروع (اعتمد عليها كأساس ولا تخالفها):\n' +
+      aKeys.map(function(k){ return '- ' + k + ': ' + answers[k]; }).join('\n');
+  }
+  const prompt = ctx(data) + answersText + '\nالمطلوب: ' + TASKS[docType] + COMMON;
 
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', {

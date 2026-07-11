@@ -370,8 +370,16 @@
       .catch(function(){ st.textContent='حصل خطأ في الاتصال، حاول تاني.'; });
   }
   function showGenerated(label, html){
-    id('studioOutput').innerHTML='<div style="border:1px solid var(--line);border-radius:12px;padding:18px;margin-top:14px;background:#fff;line-height:1.9" dir="rtl">'+html+'</div><div class="btnrow"><button class="btn" onclick="printGenerated()">📄 تحميل PDF</button></div>';
+    id('studioOutput').innerHTML='<div style="border:1px solid var(--line);border-radius:12px;padding:18px;margin-top:14px;background:#fff;line-height:1.9" dir="rtl">'+html+'</div><div class="btnrow"><button class="btn" onclick="printGenerated()">📄 تحميل PDF</button> <button class="btn" style="background:#1e6fd9" onclick="downloadWord()">📝 تحميل Word (قابل للتعديل)</button></div>';
     window._lastGen={ label:label, html:html };
+  }
+  function downloadWord(){
+    if(!window._lastGen) return;
+    var head='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><style>body{font-family:Calibri,Arial,sans-serif;direction:rtl;text-align:right}h2{color:#047857}h3{color:#0e9f6e}table{border-collapse:collapse;width:100%}td,th{border:1px solid #999;padding:6px}</style></head><body dir="rtl">';
+    var content=head+'<h1>نَفَس — '+window._lastGen.label+'</h1>'+window._lastGen.html+'</body></html>';
+    var blob=new Blob(['﻿'+content],{type:'application/msword'});
+    var a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='نفس-'+window._lastGen.label+'.doc'; a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 4000);
   }
   function printGenerated(){
     if(!window._lastGen) return;

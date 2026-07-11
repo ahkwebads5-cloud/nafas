@@ -360,18 +360,32 @@
   function doGenerate(docType, label, answers){
     var contact=(id('ucontact').value||'').trim();
     if(!contact){ alert('اكتب الإيميل أو الموبايل فوق الأول.'); return; }
-    var st=id('studioStatus'); st.textContent='⏳ بنجهّز «'+label+'»... ممكن ياخد لحد دقيقة.';
-    id('studioOutput').innerHTML='';
-    var d=LAST||{};
-    fetch('/api/generate',{ method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ contact:contact, docType:docType, answers:answers||{}, data:{ name:id('uname').value, sector:d.sector, stage:d.stage, country:d.country, cash:d.cash, expenses:d.exp, revenue:d.rev, growth:d.growth, targetMonths:targetM, runway:d.rw, needed:d.need } }) })
-      .then(function(r){ return r.json(); })
-      .then(function(res){ if(res && res.html){ st.textContent=''; showGenerated(label, res.html); } else { st.textContent='حصل خطأ في التجهيز، حاول تاني.'; } })
-      .catch(function(){ st.textContent='حصل خطأ في الاتصال، حاول تاني.'; });
+    window._genFull=''; window._genArgs={docType:docType,label:label,answers:answers||{}};
+    id('studioOutput').innerHTML='<div id="genLive" style="border:1px solid var(--line);border-radius:12px;padding:18px;margin-top:14px;background:#fff;line-height:1.9" dir="rtl"></div>';
+    runSection(0);
   }
-  function showGenerated(label, html){
-    id('studioOutput').innerHTML='<div style="border:1px solid var(--line);border-radius:12px;padding:18px;margin-top:14px;background:#fff;line-height:1.9" dir="rtl">'+html+'</div><div class="btnrow"><button class="btn" onclick="printGenerated()">📄 تحميل PDF</button> <button class="btn" style="background:#1e6fd9" onclick="downloadWord()">📝 تحميل Word (قابل للتعديل)</button></div>';
-    window._lastGen={ label:label, html:html };
+  function runSection(section){
+    var a=window._genArgs; var d=LAST||{};
+    var contact=(id('ucontact').value||'').trim();
+    var st=id('studioStatus'); st.textContent='⏳ بنجهّز الملف (بيبحث ويكتب — جزء '+(section+1)+')... سيبه يخلّص، بياخد شوية.';
+    fetch('/api/generate',{ method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ contact:contact, docType:a.docType, section:section, answers:a.answers, data:{ name:id('uname').value, sector:d.sector, stage:d.stage, country:d.country, cash:d.cash, expenses:d.exp, revenue:d.rev, growth:d.growth, targetMonths:targetM, runway:d.rw, needed:d.need } }) })
+      .then(function(r){ return r.json(); })
+      .then(function(res){
+        if(res && res.html){
+          window._genFull += (window._genFull?'<hr style="border:none;border-top:1px solid #e2e8f0;margin:18px 0">':'') + res.html;
+          var live=id('genLive'); if(live) live.innerHTML=window._genFull;
+          if(res.hasMore){ st.textContent='✓ خلص '+(section+1)+'/'+res.total+' — بنكمّل الجزء اللي بعده...'; runSection(section+1); }
+          else { st.textContent='✓ الملف جاهز'; finishGenerated(); }
+        } else if(res && res.error==='not_unlocked'){ st.textContent='الاستوديو للمشتركين فقط.'; }
+        else { st.textContent='حصل خطأ في جزء '+(section+1)+'. اضغط الزر تاني.'; }
+      })
+      .catch(function(){ st.textContent='حصل خطأ في الاتصال (جزء '+(section+1)+'). حاول تاني.'; });
+  }
+  function finishGenerated(){
+    var label=window._genArgs?window._genArgs.label:'الملف';
+    window._lastGen={ label:label, html:window._genFull };
+    id('studioOutput').innerHTML='<div style="border:1px solid var(--line);border-radius:12px;padding:18px;margin-top:14px;background:#fff;line-height:1.9" dir="rtl">'+window._genFull+'</div><div class="btnrow"><button class="btn" onclick="printGenerated()">📄 تحميل PDF</button> <button class="btn" style="background:#1e6fd9" onclick="downloadWord()">📝 تحميل Word (قابل للتعديل)</button></div>';
   }
   function downloadWord(){
     if(!window._lastGen) return;

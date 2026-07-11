@@ -62,7 +62,7 @@ module.exports = async (req, res) => {
     const r = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'x-api-key': KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
-      body: JSON.stringify({ model: MODEL, max_tokens: 4000, messages: [{ role: 'user', content: prompt }] })
+      body: JSON.stringify({ model: MODEL, max_tokens: 5000, thinking: { type: 'disabled' }, messages: [{ role: 'user', content: prompt }] })
     });
     const d = await r.json();
     const textBlock = d && Array.isArray(d.content) ? d.content.find(function(c){ return c.type === 'text'; }) : null;

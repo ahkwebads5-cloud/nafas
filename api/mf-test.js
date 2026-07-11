@@ -10,11 +10,10 @@ async function probe(base, token, cur) {
   } catch (e) { return { err: e.message }; }
 }
 module.exports = async (req, res) => {
-  const BASE = (process.env.MYFATOORAH_BASE || '').trim();
+  const BASE = (((req.query && req.query.base) || process.env.MYFATOORAH_BASE) || '').trim();
   const TOKEN = (process.env.MYFATOORAH_TOKEN || '').trim();
   res.status(200).json({
     base: BASE,
-    egp: await probe(BASE, TOKEN, 'EGP'),
-    kwd: await probe(BASE, TOKEN, 'KWD')
+    egp: await probe(BASE, TOKEN, 'EGP')
   });
 };

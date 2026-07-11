@@ -90,9 +90,8 @@ module.exports = async (req, res) => {
     '\n\nأنت تكتب قسم «' + sec.title + '» من ' + (DOCLABEL[docType] || '') + ' لهذا المشروع.\n' +
     'المطلوب: ' + sec.task + '\n' + fmt;
 
-  const reqBody = { model: MODEL, max_tokens: sec.search ? 3000 : 3800, messages: [{ role: 'user', content: prompt }] };
+  const reqBody = { model: MODEL, max_tokens: sec.search ? 4000 : 3800, thinking: { type: 'disabled' }, messages: [{ role: 'user', content: prompt }] };
   if (sec.search) reqBody.tools = [{ type: 'web_search_20250305', name: 'web_search', max_uses: 2 }];
-  else reqBody.thinking = { type: 'disabled' };
 
   try {
     const r = await fetch('https://api.anthropic.com/v1/messages', {

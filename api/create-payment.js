@@ -28,15 +28,17 @@ module.exports = async (req, res) => {
         ErrorUrl: SITE + '/api/payment-callback'
       })
     });
-    const data = await r.json();
+    const rawText = await r.text();
+    let data = null; try { data = JSON.parse(rawText); } catch (e) {}
     if (data && data.IsSuccess && data.Data && data.Data.InvoiceURL) {
       res.status(200).json({ url: data.Data.InvoiceURL, invoiceId: data.Data.InvoiceId });
     } else {
       res.status(400).json({
         error: 'myfatoorah_error',
+        mf_status: r.status,
         message: data && data.Message,
         validation: data && data.ValidationErrors,
-        raw: data
+        raw: data || rawText.slice(0, 300)
       });
     }
   } catch (e) {

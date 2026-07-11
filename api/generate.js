@@ -70,7 +70,7 @@ module.exports = async (req, res) => {
       headers: { 'x-api-key': KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
       body: JSON.stringify({
         model: MODEL,
-        max_tokens: 6000,
+        max_tokens: 4000,
         thinking: { type: 'disabled' },
         messages: [{ role: 'user', content: prompt }]
       })

@@ -194,6 +194,12 @@
     <div class="steps" id="steps"></div>
   </div>
 
+  <div class="card">
+    <h2>🧭 تكمّل إزاي من غير تمويل؟</h2>
+    <div class="lead">لو مش عايز تجمع دلوقتي — دي طرق تطوّل بيها نفسك، وجوانب تحرص عليها تفضل بعيد عن أزمة السيولة.</div>
+    <div id="noFund"></div>
+  </div>
+
   <footer>نموذج تجريبي (MVP) — «نَفَس» · النسخة الكاملة قريباً</footer>
 </div>
 
@@ -288,7 +294,8 @@
     {k:'feasibility',t:'دراسة جدوى احترافية'},
     {k:'deck',t:'عرض تقديمي (Pitch Deck)'},
     {k:'emails',t:'إيميلات المستثمرين'},
-    {k:'captable',t:'هيكل الملكية (Cap Table)'}
+    {k:'captable',t:'هيكل الملكية (Cap Table)'},
+    {k:'turnaround',t:'🚑 إنقاذ مشروع متعثّر'}
   ];
   function renderStudio(){
     var c=id('studioCard'); if(!c) return;
@@ -296,6 +303,30 @@
     var b=id('studioBtns'); if(b && !b.dataset.done){ b.dataset.done='1';
       STUDIO.forEach(function(s){ var btn=el('button','btn'); btn.style.cssText='margin:6px 6px 0 0;padding:11px 16px;font-size:14px'; btn.textContent=s.t; btn.onclick=function(){ openIntake(s.k, s.t); }; b.appendChild(btn); });
     }
+  }
+  function renderNoFund(cash, exp, rev, growth, rw){
+    var box=id('noFund'); if(!box) return;
+    var rwCut15 = runwayMonths(cash, exp*0.85, rev, growth);
+    var rwCut30 = runwayMonths(cash, exp*0.70, rev, growth);
+    var beGap = Math.max(0, exp - rev);
+    var reserve = exp*3;
+    var rwTxt = function(m){ return m>=999 ? 'مؤمّن' : m+' شهر'; };
+    var h = '<div style="font-weight:700;color:#047857;margin:4px 0 6px">طرق تطوّل بيها نفسك:</div><ul style="margin:0;padding-inline-start:20px">';
+    h += '<li>لو قلّلت مصاريفك <b>15%</b> → نفسك يبقى <b>'+rwTxt(rwCut15)+'</b> (بدل '+rwTxt(rw)+').</li>';
+    h += '<li>لو قلّلتها <b>30%</b> → نفسك يبقى <b>'+rwTxt(rwCut30)+'</b>.</li>';
+    if(beGap>0) h += '<li>لو زوّدت إيرادك بـ<b>'+fmt(beGap)+'</b> شهريًا → توصل للتعادل ومتحرقش كاش خالص.</li>';
+    else h += '<li>إيرادك بيغطّي مصاريفك بالفعل — ركّز تكبّر الفرق ده.</li>';
+    h += '<li>سيب <b>'+fmt(reserve)+'</b> (تقريبًا 3 شهور مصاريف) احتياطي طوارئ متلمسهوش.</li>';
+    h += '</ul>';
+    h += '<div style="font-weight:700;color:#b45309;margin:14px 0 6px">⚠️ جوانب تحرص عليها لـ18-24 شهر:</div><ul style="margin:0;padding-inline-start:20px">'+
+      '<li>افصل حساب المشروع عن حسابك الشخصي — عشان تشوف الأرقام الحقيقية.</li>'+
+      '<li>اعرف مصاريفك الثابتة من المتغيّرة، وقلّل الثابتة أول ما تقدر.</li>'+
+      '<li>تابع تحصيل مستحقاتك — فلوسك عند العملاء ممكن تغرقك.</li>'+
+      '<li>متكبّرش المصاريف مع أول نمو — النمو مش مضمون يستمر.</li>'+
+      '<li>سعّر صح — هامش ربح ضعيف بياكل نفسك من غير ما تحس.</li>'+
+      '<li>راجع أرقامك كل شهر — التعثّر بيبدأ بدري وبيتصلح بدري.</li>'+
+      '</ul>';
+    box.innerHTML = h;
   }
   var INTAKE = {
     readiness: [
@@ -329,6 +360,14 @@
       {k:'founders', l:'المؤسسين ونِسبهم الحالية؟ (مثال: أنا 60% وشريكي 40%)', t:'text'},
       {k:'prev_investment', l:'فيه استثمار سابق؟ (اكتب التفاصيل أو «لا»)', t:'text'},
       {k:'valuation', l:'توقّع التقييم لو عندك (أو سيبها فاضية ونقدّرها)', t:'text'}
+    ],
+    turnaround: [
+      {k:'duration', l:'المشروع شغّال بقاله قد إيه؟', t:'text'},
+      {k:'problem_type', l:'نوع التعثّر الأساسي؟ (مالي / إداري / تشغيلي / مبيعات)', t:'text'},
+      {k:'main_issue', l:'أكبر مشكلة بتواجهك دلوقتي بالظبط؟', t:'textarea'},
+      {k:'what_changed', l:'إيه اللي اتغيّر وبدأ المشكلة؟ (حدث أو قرار معيّن)', t:'text'},
+      {k:'debts', l:'عليك ديون أو مستحقات متأخرة؟ (اكتب التفاصيل أو «لا»)', t:'text'},
+      {k:'team', l:'حجم الفريق وأكبر المصاريف الثابتة؟', t:'text'}
     ]
   };
 
@@ -527,6 +566,7 @@
 
     LAST = {cash:cash,exp:exp,rev:rev,growth:growth,stage:stage,country:country,sector:sector,rw:rw,need:need,sources:sources,steps:steps};
     renderStudio();
+    renderNoFund(cash, exp, rev, growth, rw);
   }
 
   function buildReport(){

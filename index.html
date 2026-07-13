@@ -172,7 +172,8 @@
         <div id="risks"></div>
       </div>
     </div>
-    <div class="btnrow"><button class="btn" onclick="downloadReport()">📄 حمّل تقريرك (PDF)</button></div>
+    <div class="btnrow"><button class="btn" onclick="downloadReport()">📄 حمّل تقريرك (PDF)</button> <button class="btn" onclick="generateFreePlan()">🧭 جهّزلي خطة استمرار مخصّصة</button></div>
+    <div id="freePlanOut"></div>
   </div>
 
   <div class="card">
@@ -318,8 +319,6 @@
     else h += '<li>إيرادك بيغطّي مصاريفك بالفعل — ركّز تكبّر الفرق ده.</li>';
     h += '<li>سيب <b>'+fmt(reserve)+'</b> (تقريبًا 3 شهور مصاريف) احتياطي طوارئ متلمسهوش.</li>';
     h += '</ul>';
-    h += '<div style="margin-top:16px"><button class="btn" onclick="generateFreePlan()">🧭 جهّزلي خطة استمرار مخصّصة لمشروعي</button></div>';
-    h += '<div id="freePlanOut"></div>';
     box.innerHTML = h;
   }
   function generateFreePlan(){
@@ -331,7 +330,11 @@
     fetch('/api/free-plan',{ method:'POST', headers:{'Content-Type':'application/json'},
       body:JSON.stringify({ contact:contact, data:{ name:id('uname').value, sector:d.sector, stage:d.stage, country:d.country, cash:d.cash, expenses:d.exp, revenue:d.rev, growth:d.growth, targetMonths:targetM, runway:d.rw, needed:d.need } }) })
       .then(function(r){ return r.json(); })
-      .then(function(res){ if(res && res.html){ out.innerHTML='<div style="border:1px solid #a7f3d0;border-radius:12px;padding:16px;margin-top:12px;background:#f0fdf4;line-height:1.9" dir="rtl">'+res.html+'</div>'; } else { out.innerHTML='<div class="hint" style="margin-top:10px;color:#dc2626">حصل خطأ، حاول تاني.</div>'; } })
+      .then(function(res){
+        if(res && res.html){ out.innerHTML='<div style="border:1px solid #a7f3d0;border-radius:12px;padding:16px;margin-top:12px;background:#f0fdf4;line-height:1.9" dir="rtl">'+res.html+'</div>'; }
+        else if(res && res.error==='rate_limited'){ out.innerHTML='<div class="hint" style="margin-top:10px;color:#b45309">استخدمت خطتك المجانية الأسبوع ده ✋ جرّب الأسبوع الجاي، أو افتح «نَفَس برو» للملفات الكاملة.</div>'; }
+        else { out.innerHTML='<div class="hint" style="margin-top:10px;color:#dc2626">حصل خطأ، حاول تاني.</div>'; }
+      })
       .catch(function(){ out.innerHTML='<div class="hint" style="margin-top:10px;color:#dc2626">حصل خطأ في الاتصال، حاول تاني.</div>'; });
   }
   var INTAKE = {

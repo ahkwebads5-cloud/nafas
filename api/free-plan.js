@@ -12,6 +12,21 @@ module.exports = async (req, res) => {
   if (!KEY) { res.status(500).json({ error: 'missing_anthropic_key' }); return; }
   const MODEL = (process.env.ANTHROPIC_FREE_MODEL || 'claude-haiku-4-5-20251001').trim();
 
+  const SB = (process.env.SUPABASE_URL || '').trim();
+  const SK = (process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
+  // حد الاستخدام: مرة كل أسبوع لكل عميل
+  if (SB && SK) {
+    try {
+      const since = new Date(Date.now() - 7 * 24 * 3600 * 1000).toISOString();
+      const q = await fetch(SB + '/rest/v1/free_usage?contact=eq.' + encodeURIComponent(contact) + '&created_at=gte.' + encodeURIComponent(since) + '&select=id&limit=1',
+        { headers: { 'apikey': SK, 'Authorization': 'Bearer ' + SK } });
+      if (q.ok) {
+        const used = await q.json();
+        if (Array.isArray(used) && used.length > 0) { res.status(429).json({ error: 'rate_limited' }); return; }
+      }
+    } catch (e) { /* لو الجدول لسه مش موجود نكمّل عادي */ }
+  }
+
   const ctx = 'بيانات المشروع:\n' +
     '- الاسم: ' + (d.name || 'غير محدد') + ' | القطاع: ' + (d.sector || '') + ' | المرحلة: ' + (d.stage || '') + ' | البلد: ' + (d.country || '') + '\n' +
     '- الكاش المتاح: ' + num(d.cash) + ' ج.م | المصاريف الشهرية: ' + num(d.expenses) + ' ج.م | الإيراد الشهري: ' + num(d.revenue) + ' ج.م\n' +
@@ -36,7 +51,18 @@ module.exports = async (req, res) => {
     const blocks = data && Array.isArray(data.content) ? data.content : [];
     let html = blocks.filter(function(b){ return b.type === 'text' && b.text; }).map(function(b){ return b.text; }).join('\n');
     html = html.replace(/^```html\s*/i, '').replace(/```\s*$/,'').trim();
-    if (html) { res.status(200).json({ html: html }); }
+    if (html) {
+      if (SB && SK) {
+        try {
+          await fetch(SB + '/rest/v1/free_usage', {
+            method: 'POST',
+            headers: { 'apikey': SK, 'Authorization': 'Bearer ' + SK, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+            body: JSON.stringify({ contact: contact })
+          });
+        } catch (e) {}
+      }
+      res.status(200).json({ html: html });
+    }
     else { res.status(400).json({ error: 'anthropic_error', detail: (data && data.error) || data }); }
   } catch (e) {
     res.status(500).json({ error: e.message });

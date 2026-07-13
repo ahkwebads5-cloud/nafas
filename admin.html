@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>نَفَس — لوحة التحكم</title>
+<link rel="icon" type="image/png" href="logo.png">
+<style>
+  :root{--brand:#0e9f6e;--brand-d:#047857;--brand-l:#d1fae5;--ink:#0f172a;--muted:#64748b;--line:#e2e8f0;--bg:#f8fafc;--card:#fff}
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:"Segoe UI",Tahoma,system-ui,sans-serif;background:var(--bg);color:var(--ink);padding:20px;line-height:1.6}
+  .wrap{max-width:1000px;margin:0 auto}
+  header{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+  header img{width:52px;height:52px;border-radius:50%}
+  header h1{font-size:22px;color:var(--brand-d)}
+  .gate{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:26px;max-width:420px;margin:40px auto;text-align:center}
+  .gate h2{font-size:18px;margin-bottom:14px;color:var(--brand-d)}
+  input{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:10px;font-size:16px;font-family:inherit;margin-bottom:12px}
+  input:focus{outline:none;border-color:var(--brand)}
+  .btn{background:var(--brand);color:#fff;border:none;border-radius:10px;padding:12px 22px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer}
+  .btn:hover{background:var(--brand-d)}
+  .btn.ghost{background:#fff;color:var(--brand-d);border:1px solid var(--brand)}
+  .err{color:#dc2626;font-size:14px;margin-top:6px;min-height:18px}
+  .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+  @media(max-width:760px){.cards{grid-template-columns:1fr 1fr}}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;text-align:center}
+  .stat .k{font-size:13px;color:var(--muted)}
+  .stat .v{font-size:30px;font-weight:800;color:var(--brand-d);margin-top:4px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
+  @media(max-width:760px){.grid2{grid-template-columns:1fr}}
+  .panel{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+  .panel h3{font-size:15px;color:var(--brand-d);margin-bottom:10px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:right;white-space:nowrap}
+  th{background:var(--brand-l);color:var(--brand-d);font-weight:700;position:sticky;top:0}
+  .scroll{overflow:auto;max-height:520px;border:1px solid var(--line);border-radius:14px}
+  .bar{height:8px;background:var(--brand);border-radius:4px;display:inline-block;vertical-align:middle;margin-left:8px}
+  .toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px;flex-wrap:wrap}
+  .muted{color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><img src="logo.png" alt="نَفَس"><h1>لوحة تحكم نَفَس</h1></header>
+
+  <div id="gate" class="gate">
+    <h2>🔒 ادخل الباسورد</h2>
+    <input type="password" id="pass" placeholder="الباسورد" onkeydown="if(event.key==='Enter')login()">
+    <button class="btn" onclick="login()">دخول</button>
+    <div class="err" id="err"></div>
+  </div>
+
+  <div id="dash" style="display:none">
+    <div class="toolbar">
+      <div class="muted" id="updated"></div>
+      <div>
+        <button class="btn ghost" onclick="load()">🔄 تحديث</button>
+        <button class="btn ghost" onclick="exportCsv()">⬇ تصدير CSV</button>
+        <button class="btn ghost" onclick="logout()">خروج</button>
+      </div>
+    </div>
+
+    <div class="cards">
+      <div class="stat"><div class="k">مسجّلين (إجمالي)</div><div class="v" id="s_total">—</div></div>
+      <div class="stat"><div class="k">مسجّلين فريدين</div><div class="v" id="s_unique">—</div></div>
+      <div class="stat"><div class="k">مشتركين برو (دفعوا)</div><div class="v" id="s_paid">—</div></div>
+      <div class="stat"><div class="k">خطط مجانية اتطلبت</div><div class="v" id="s_free">—</div></div>
+    </div>
+
+    <div class="grid2">
+      <div class="panel"><h3>🌍 الدول</h3><div id="countries"></div></div>
+      <div class="panel"><h3>🏷️ القطاعات</h3><div id="sectors"></div></div>
+    </div>
+
+    <div class="panel">
+      <h3>👥 تفاصيل المسجّلين</h3>
+      <div class="scroll">
+        <table>
+          <thead><tr><th>التاريخ</th><th>الاسم</th><th>التواصل</th><th>القطاع</th><th>المرحلة</th><th>البلد</th><th>الكاش</th><th>المطلوب</th></tr></thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  var KEY = localStorage.getItem('nafas_admin_key') || '';
+  var LAST = null;
+  function fmt(n){ return (Number(n)||0).toLocaleString('en-US'); }
+  function esc(s){ return (s==null?'':String(s)).replace(/[<>&]/g,function(c){return{'<':'&lt;','>':'&gt;','&':'&amp;'}[c];}); }
+  function dt(s){ if(!s) return '—'; var d=new Date(s); return d.toLocaleDateString('ar-EG')+' '+d.toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'}); }
+
+  function login(){
+    var p=document.getElementById('pass').value.trim();
+    if(!p) return;
+    KEY=p; load(true);
+  }
+  function logout(){ localStorage.removeItem('nafas_admin_key'); KEY=''; document.getElementById('dash').style.display='none'; document.getElementById('gate').style.display='block'; }
+
+  function load(fromLogin){
+    var err=document.getElementById('err');
+    fetch('/api/admin-data',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({key:KEY})})
+      .then(function(r){ if(r.status===401){ throw new Error('الباسورد غلط'); } return r.json(); })
+      .then(function(d){
+        localStorage.setItem('nafas_admin_key', KEY);
+        LAST=d;
+        document.getElementById('gate').style.display='none';
+        document.getElementById('dash').style.display='block';
+        render(d);
+      })
+      .catch(function(e){ if(err) err.textContent=e.message||'حصل خطأ'; });
+  }
+
+  function bars(list, container){
+    var el=document.getElementById(container); el.innerHTML='';
+    if(!list || !list.length){ el.innerHTML='<div class="muted">لا يوجد بيانات بعد</div>'; return; }
+    var max=list[0].count||1;
+    list.forEach(function(x){
+      var row=document.createElement('div'); row.style.cssText='display:flex;justify-content:space-between;align-items:center;padding:4px 0;font-size:14px';
+      row.innerHTML='<span>'+esc(x.name)+'</span><span><b>'+x.count+'</b><span class="bar" style="width:'+Math.max(6,(x.count/max)*120)+'px"></span></span>';
+      el.appendChild(row);
+    });
+  }
+
+  function render(d){
+    document.getElementById('s_total').textContent=fmt(d.stats.total_leads);
+    document.getElementById('s_unique').textContent=fmt(d.stats.unique_contacts);
+    document.getElementById('s_paid').textContent=fmt(d.stats.paid_unlocks);
+    document.getElementById('s_free').textContent=fmt(d.stats.free_plans_used);
+    bars(d.by_country,'countries');
+    bars(d.by_sector,'sectors');
+    var tb=document.getElementById('rows'); tb.innerHTML='';
+    (d.leads||[]).forEach(function(l){
+      var tr=document.createElement('tr');
+      tr.innerHTML='<td>'+dt(l.created_at)+'</td><td>'+esc(l.name)+'</td><td>'+esc(l.contact)+'</td><td>'+esc(l.sector)+'</td><td>'+esc(l.stage)+'</td><td>'+esc(l.country)+'</td><td>'+fmt(l.cash)+'</td><td>'+fmt(l.amount_needed)+'</td>';
+      tb.appendChild(tr);
+    });
+    document.getElementById('updated').textContent='آخر تحديث: '+new Date().toLocaleTimeString('ar-EG');
+  }
+
+  function exportCsv(){
+    if(!LAST||!LAST.leads) return;
+    var head=['التاريخ','الاسم','التواصل','القطاع','المرحلة','البلد','الكاش','المصاريف','الإيراد','المطلوب'];
+    var rows=LAST.leads.map(function(l){ return [dt(l.created_at),l.name,l.contact,l.sector,l.stage,l.country,l.cash,l.expenses,l.revenue,l.amount_needed].map(function(v){ return '"'+String(v==null?'':v).replace(/"/g,'""')+'"'; }).join(','); });
+    var csv='﻿'+head.join(',')+'\n'+rows.join('\n');
+    var a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'})); a.download='nafas-leads.csv'; a.click();
+  }
+
+  if(KEY) load();
+</script>
+</body>
+</html>

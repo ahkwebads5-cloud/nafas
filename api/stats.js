@@ -18,7 +18,7 @@ module.exports = async (req, res) => {
 
   try {
     const leads = await count('leads?select=id');
-    const paid = await count('unlocks?select=id&status=eq.paid');
+    const paid = await count('unlocks?select=id&status=eq.paid&payment_id=neq.owner-access');
     let free = 0;
     try { free = await count('free_usage?select=id'); } catch (e) {}
     res.status(200).json({

@@ -28,7 +28,7 @@ module.exports = async (req, res) => {
     const sortMap = function (m) { return Object.keys(m).map(function (k) { return { name: k, count: m[k] }; }).sort(function (a, b) { return b.count - a.count; }); };
 
     const total_leads = await count('leads?select=id');
-    const paid = await count('unlocks?select=id&status=eq.paid');
+    const paid = await count('unlocks?select=id&status=eq.paid&payment_id=neq.owner-access');
     let free = 0; try { free = await count('free_usage?select=id'); } catch (e) {}
 
     res.status(200).json({

@@ -318,15 +318,21 @@
     else h += '<li>إيرادك بيغطّي مصاريفك بالفعل — ركّز تكبّر الفرق ده.</li>';
     h += '<li>سيب <b>'+fmt(reserve)+'</b> (تقريبًا 3 شهور مصاريف) احتياطي طوارئ متلمسهوش.</li>';
     h += '</ul>';
-    h += '<div style="font-weight:700;color:#b45309;margin:14px 0 6px">⚠️ جوانب تحرص عليها لـ18-24 شهر:</div><ul style="margin:0;padding-inline-start:20px">'+
-      '<li>افصل حساب المشروع عن حسابك الشخصي — عشان تشوف الأرقام الحقيقية.</li>'+
-      '<li>اعرف مصاريفك الثابتة من المتغيّرة، وقلّل الثابتة أول ما تقدر.</li>'+
-      '<li>تابع تحصيل مستحقاتك — فلوسك عند العملاء ممكن تغرقك.</li>'+
-      '<li>متكبّرش المصاريف مع أول نمو — النمو مش مضمون يستمر.</li>'+
-      '<li>سعّر صح — هامش ربح ضعيف بياكل نفسك من غير ما تحس.</li>'+
-      '<li>راجع أرقامك كل شهر — التعثّر بيبدأ بدري وبيتصلح بدري.</li>'+
-      '</ul>';
+    h += '<div style="margin-top:16px"><button class="btn" onclick="generateFreePlan()">🧭 جهّزلي خطة استمرار مخصّصة لمشروعي</button></div>';
+    h += '<div id="freePlanOut"></div>';
     box.innerHTML = h;
+  }
+  function generateFreePlan(){
+    var contact=(id('ucontact').value||'').trim();
+    if(!contact){ alert('اكتب الإيميل أو الموبايل فوق الأول عشان نجهّزلك خطتك.'); id('ucontact').focus(); return; }
+    saveLead();
+    var out=id('freePlanOut'); out.innerHTML='<div class="hint" style="margin-top:12px;color:#047857">⏳ بنجهّز خطتك المخصّصة لمشروعك... لحظات.</div>';
+    var d=LAST||{};
+    fetch('/api/free-plan',{ method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ contact:contact, data:{ name:id('uname').value, sector:d.sector, stage:d.stage, country:d.country, cash:d.cash, expenses:d.exp, revenue:d.rev, growth:d.growth, targetMonths:targetM, runway:d.rw, needed:d.need } }) })
+      .then(function(r){ return r.json(); })
+      .then(function(res){ if(res && res.html){ out.innerHTML='<div style="border:1px solid #a7f3d0;border-radius:12px;padding:16px;margin-top:12px;background:#f0fdf4;line-height:1.9" dir="rtl">'+res.html+'</div>'; } else { out.innerHTML='<div class="hint" style="margin-top:10px;color:#dc2626">حصل خطأ، حاول تاني.</div>'; } })
+      .catch(function(){ out.innerHTML='<div class="hint" style="margin-top:10px;color:#dc2626">حصل خطأ في الاتصال، حاول تاني.</div>'; });
   }
   var INTAKE = {
     readiness: [
@@ -436,7 +442,7 @@
   }
   function printGenerated(){
     if(!window._lastGen) return;
-    id('report').innerHTML='<div class="rep-head"><div><div class="r-logo">نَفَس</div><div class="r-tag">'+window._lastGen.label+'</div></div><div class="r-meta">'+todayStr()+'</div></div><div style="margin-top:16px" dir="rtl">'+window._lastGen.html+'</div>';
+    id('report').innerHTML='<div class="rep-head"><div><img src="logo.png" alt="نَفَس" style="width:56px;height:56px;border-radius:50%;background:#fff;padding:3px;box-sizing:border-box"><div class="r-tag">'+window._lastGen.label+'</div></div><div class="r-meta">'+todayStr()+'</div></div><div style="margin-top:16px" dir="rtl">'+window._lastGen.html+'</div>';
     window.print();
   }
 
@@ -598,7 +604,7 @@
     var stepsHtml = d.steps.map(function(t,i){ return '<div class="rep-step"><b>'+(i+1)+'.</b> '+t+'</div>'; }).join('');
 
     id('report').innerHTML =
-      '<div class="rep-head"><div><div class="r-logo">نَفَس</div><div class="r-tag">تقرير طول نفس مشروعك</div></div>'+
+      '<div class="rep-head"><div><img src="logo.png" alt="نَفَس" style="width:56px;height:56px;border-radius:50%;background:#fff;padding:3px;box-sizing:border-box"><div class="r-tag">تقرير طول نفس مشروعك</div></div>'+
       '<div class="r-meta">التاريخ: '+todayStr()+'<br>أُعدّ لـ: '+name+'</div></div>'+
 
       '<div class="rep-hero">'+

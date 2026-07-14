@@ -62,6 +62,11 @@
   .btn{display:inline-flex;align-items:center;gap:8px;background:var(--brand);color:#fff;border:none;border-radius:12px;padding:14px 22px;font-family:inherit;font-size:16px;font-weight:700;cursor:pointer;margin-top:16px}
   .btn:hover{background:var(--brand-d)}
   .btnrow{text-align:center}
+  .tabs{display:flex;gap:8px;margin:0 0 18px;flex-wrap:wrap}
+  .tabs .tab{flex:1;min-width:170px;padding:13px;border:1px solid var(--line);background:#fff;border-radius:12px;font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;color:var(--muted)}
+  .tabs .tab.on{background:var(--brand);border-color:var(--brand);color:#fff}
+  textarea{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:10px;font-size:16px;font-family:inherit}
+  textarea:focus{outline:none;border-color:var(--brand)}
   footer{text-align:center;color:var(--muted);font-size:13px;margin-top:26px}
 
   /* تقرير الطباعة */
@@ -113,6 +118,12 @@
     <div id="leadStatus" class="hint" style="margin-top:8px;color:#047857"></div>
   </div>
 
+  <div class="tabs">
+    <button class="tab on" id="tabbtn-calc" onclick="showTab('calc')">📊 حاسبة النفس</button>
+    <button class="tab" id="tabbtn-idea" onclick="showTab('idea')">💡 تقييم الفكرة وقابليتها للتمويل</button>
+  </div>
+
+  <div id="tab-calc">
   <div class="grid">
     <div class="card">
       <h2>عن مشروعك</h2>
@@ -220,6 +231,27 @@
     <h2>🧭 تكمّل إزاي من غير تمويل؟</h2>
     <div class="lead">لو مش عايز تجمع دلوقتي — دي طرق تطوّل بيها نفسك، وجوانب تحرص عليها تفضل بعيد عن أزمة السيولة.</div>
     <div id="noFund"></div>
+  </div>
+  </div>
+
+  <div id="tab-idea" style="display:none">
+    <div class="card" style="margin-top:0">
+      <h2>💡 قياس فعالية فكرتك وقابليتها للتمويل</h2>
+      <div class="lead">اوصف فكرتك، وهنقيّم قوّتها في السوق وقابليتها للتمويل بناءً على السوق والبلد ونوع الفكرة — قبل ما تفكّر في التمويل أصلاً.</div>
+      <label>اوصف فكرتك</label>
+      <textarea id="idea_desc" rows="3" placeholder="مثال: تطبيق يوصّل وجبات صحية باشتراك شهري للموظفين..."></textarea>
+      <div class="two">
+        <div><label>القطاع</label><select id="idea_sector"></select></div>
+        <div><label>البلد / السوق</label><select id="idea_country"></select></div>
+      </div>
+      <label>مين العميل المستهدف؟</label>
+      <input type="text" id="idea_customer" placeholder="مثال: موظفو الشركات في القاهرة">
+      <label>إيه اللي يميّز فكرتك؟</label>
+      <input type="text" id="idea_diff" placeholder="الميزة اللي تخليك مختلف عن الموجود">
+      <div class="btnrow" style="text-align:right;margin-top:14px"><button class="btn" onclick="scoreIdea()">قيّم فكرتي 🎯</button></div>
+      <div id="ideaStatus" class="hint" style="margin-top:10px;color:#047857"></div>
+      <div id="ideaOut"></div>
+    </div>
   </div>
 
   <footer>نموذج تجريبي (MVP) — «نَفَس» · النسخة الكاملة قريباً</footer>
@@ -361,6 +393,31 @@
         else { out.innerHTML='<div class="hint" style="margin-top:10px;color:#dc2626">حصل خطأ، حاول تاني.</div>'; }
       })
       .catch(function(){ out.innerHTML='<div class="hint" style="margin-top:10px;color:#dc2626">حصل خطأ في الاتصال، حاول تاني.</div>'; });
+  }
+
+  function showTab(t){
+    id('tab-calc').style.display = t==='calc' ? 'block' : 'none';
+    id('tab-idea').style.display = t==='idea' ? 'block' : 'none';
+    id('tabbtn-calc').classList.toggle('on', t==='calc');
+    id('tabbtn-idea').classList.toggle('on', t==='idea');
+    window.scrollTo(0,0);
+  }
+  function scoreIdea(){
+    var contact=(id('ucontact').value||'').trim();
+    if(!contact){ alert('اكتب الإيميل أو الموبايل فوق الأول.'); id('ucontact').focus(); return; }
+    var desc=(id('idea_desc').value||'').trim();
+    if(!desc){ alert('اوصف فكرتك الأول.'); id('idea_desc').focus(); return; }
+    saveLead();
+    var st=id('ideaStatus'); st.textContent='⏳ بنقيّم فكرتك في السوق... لحظات.';
+    id('ideaOut').innerHTML='';
+    fetch('/api/idea-score',{ method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ contact:contact, data:{ idea:desc, sector:id('idea_sector').value, country:id('idea_country').value, customer:id('idea_customer').value, diff:id('idea_diff').value } }) })
+      .then(function(r){ return r.json(); })
+      .then(function(res){
+        if(res && res.html){ st.textContent=''; id('ideaOut').innerHTML='<div style="border:1px solid #a7f3d0;border-radius:12px;padding:16px;margin-top:12px;background:#f0fdf4;line-height:1.9" dir="rtl">'+res.html+'</div>'; }
+        else { st.textContent='حصل خطأ في التقييم، حاول تاني.'; }
+      })
+      .catch(function(){ st.textContent='حصل خطأ في الاتصال، حاول تاني.'; });
   }
   var INTAKE = {
     readiness: [
@@ -694,6 +751,8 @@
       if(p.get('pay')==='fail' || p.get('pay')==='error'){ setTimeout(function(){ alert('معلش، الدفع مكملش. تقدر تجرّب تاني من زرار «افتح التفاصيل».'); }, 300); }
     }catch(e){}
   })();
+  id('idea_sector').innerHTML = id('sector').innerHTML;
+  id('idea_country').innerHTML = id('country').innerHTML;
   calc();
 </script>
 <script defer src="/_vercel/insights/script.js"></script>

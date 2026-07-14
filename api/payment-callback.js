@@ -18,7 +18,9 @@ module.exports = async (req, res) => {
     const data = await r.json();
     const d = data && data.Data;
     const paid = d && d.InvoiceStatus === 'Paid';
-    const contact = d && d.CustomerReference;
+    const ref = (d && d.CustomerReference) || '';
+    const contact = ref.split('::')[0];
+    const product = ref.split('::')[1] === 'idea' ? 'idea' : 'pro';
 
     if (paid && contact) {
       try {
@@ -30,10 +32,10 @@ module.exports = async (req, res) => {
             'Content-Type': 'application/json',
             'Prefer': 'return=minimal'
           },
-          body: JSON.stringify({ contact: contact, payment_id: String(paymentId), amount: d.InvoiceValue, currency: 'EGP', status: 'paid' })
+          body: JSON.stringify({ contact: contact, payment_id: String(paymentId), amount: d.InvoiceValue, currency: 'EGP', status: 'paid', product: product })
         });
       } catch (e) { /* الدفع تم؛ لو فشل التسجيل نكمّل ونفتح للعميل */ }
-      redirect('/?unlocked=' + encodeURIComponent(contact));
+      redirect('/?unlocked=' + encodeURIComponent(contact) + '&p=' + product);
       return;
     }
     redirect('/?pay=fail');

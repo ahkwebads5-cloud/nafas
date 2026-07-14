@@ -93,7 +93,7 @@ module.exports = async (req, res) => {
   const SB = (process.env.SUPABASE_URL || '').trim();
   const SK = (process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
   try {
-    const u = await fetch(SB + '/rest/v1/unlocks?contact=eq.' + encodeURIComponent(contact) + '&status=eq.paid&select=id&limit=1',
+    const u = await fetch(SB + '/rest/v1/unlocks?contact=eq.' + encodeURIComponent(contact) + '&status=eq.paid&product=eq.pro&select=id&limit=1',
       { headers: { 'apikey': SK, 'Authorization': 'Bearer ' + SK } });
     const rows = await u.json();
     if (!(Array.isArray(rows) && rows.length > 0)) { res.status(403).json({ error: 'not_unlocked' }); return; }

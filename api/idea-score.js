@@ -7,6 +7,16 @@ module.exports = async (req, res) => {
   if (!contact) { res.status(400).json({ error: 'contact_required' }); return; }
   if (!(d.idea && String(d.idea).trim())) { res.status(400).json({ error: 'idea_required' }); return; }
 
+  // بوابة: لازم اشتراك مدفوع (مقياس الفكرة أو برو)
+  const SB = (process.env.SUPABASE_URL || '').trim();
+  const SK = (process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim();
+  try {
+    const u = await fetch(SB + '/rest/v1/unlocks?contact=eq.' + encodeURIComponent(contact) + '&status=eq.paid&select=id&limit=1',
+      { headers: { 'apikey': SK, 'Authorization': 'Bearer ' + SK } });
+    const rows = await u.json();
+    if (!(Array.isArray(rows) && rows.length > 0)) { res.status(403).json({ error: 'not_unlocked' }); return; }
+  } catch (e) { res.status(500).json({ error: 'unlock_check_failed' }); return; }
+
   const KEY = (process.env.ANTHROPIC_API_KEY || '').trim();
   if (!KEY) { res.status(500).json({ error: 'missing_anthropic_key' }); return; }
   const MODEL = (process.env.ANTHROPIC_FREE_MODEL || 'claude-haiku-4-5-20251001').trim();

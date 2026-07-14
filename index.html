@@ -268,25 +268,41 @@
   var SB_URL = "https://valjagwyzsnprixbtaiv.supabase.co";
   var SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhbGphZ3d5enNucHJpeGJ0YWl2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2OTExODIsImV4cCI6MjA5OTI2NzE4Mn0.XVuQU7WicI0gQblv0F_j1oygjkfW_4RJlmbUFaH7I9Y";
   var leadSaved = false;
+  function isValidContact(v){
+    v=(v||'').trim(); if(!v) return false;
+    if(v.indexOf('@')>-1) return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+    var d=v.replace(/[^\d]/g,''); return d.length>=8 && d.length<=15;
+  }
   function saveLead(){
     if(leadSaved) return;
     var contact = (id('ucontact').value || "").trim();
     if(!contact) return;
+    var s=id('leadStatus');
+    if(!isValidContact(contact)){ if(s){ s.style.color='#dc2626'; s.textContent='⚠️ اكتب إيميل صحيح أو رقم موبايل صحيح.'; } return; }
     var d = LAST || {};
     leadSaved = true;
-    fetch(SB_URL + "/rest/v1/leads", {
-      method:"POST",
-      headers:{ "apikey":SB_KEY, "Authorization":"Bearer "+SB_KEY, "Content-Type":"application/json", "Prefer":"return=minimal" },
-      body: JSON.stringify({
-        name: id('uname').value || null,
-        contact: contact,
+    fetch("/api/save-lead", {
+      method:"POST", headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({ lead:{
+        name: id('uname').value || null, contact: contact,
         sector: d.sector, stage: d.stage, country: d.country,
         cash: d.cash, expenses: d.exp, revenue: d.rev, growth: d.growth,
         target_months: targetM, runway_months: d.rw, amount_needed: d.need
-      })
-    }).then(function(r){
-      if(r.ok){ var s=id('leadStatus'); if(s) s.textContent="✓ بياناتك اتسجّلت — هنبعتلك تحديثات نَفَس."; }
-      else { leadSaved=false; }
+      }})
+    }).then(function(r){ return r.json().then(function(j){ return {ok:r.ok, j:j}; }); })
+    .then(function(res){
+      var s=id('leadStatus');
+      if(res.ok){ if(s){ s.style.color='#047857'; s.textContent='✓ بياناتك اتسجّلت — هنبعتلك تحديثات نَفَس.'; } }
+      else {
+        leadSaved=false;
+        if(s){ s.style.color='#dc2626';
+          var e=res.j&&res.j.error;
+          s.textContent = e==='email_domain_unreachable' ? '⚠️ الإيميل ده مش بيستقبل رسائل — تأكد منه.'
+            : e==='invalid_email' ? '⚠️ الإيميل مش صحيح.'
+            : e==='invalid_phone' ? '⚠️ رقم الموبايل مش صحيح.'
+            : 'حصل خطأ، حاول تاني.';
+        }
+      }
     }).catch(function(){ leadSaved=false; });
   }
 
@@ -380,7 +396,7 @@
   }
   function generateFreePlan(){
     var contact=(id('ucontact').value||'').trim();
-    if(!contact){ alert('اكتب الإيميل أو الموبايل فوق الأول عشان نجهّزلك خطتك.'); id('ucontact').focus(); return; }
+    if(!isValidContact(contact)){ alert('اكتب إيميل صحيح أو رقم موبايل صحيح فوق الأول عشان نجهّزلك خطتك.'); id('ucontact').focus(); return; }
     saveLead();
     var out=id('freePlanOut'); out.innerHTML='<div class="hint" style="margin-top:12px;color:#047857">⏳ بنجهّز خطتك المخصّصة لمشروعك... لحظات.</div>';
     var d=LAST||{};
@@ -404,7 +420,7 @@
   }
   function scoreIdea(){
     var contact=(id('ucontact').value||'').trim();
-    if(!contact){ alert('اكتب الإيميل أو الموبايل فوق الأول.'); id('ucontact').focus(); return; }
+    if(!isValidContact(contact)){ alert('اكتب إيميل صحيح أو رقم موبايل صحيح فوق الأول.'); id('ucontact').focus(); return; }
     var desc=(id('idea_desc').value||'').trim();
     if(!desc){ alert('اوصف فكرتك الأول.'); id('idea_desc').focus(); return; }
     saveLead();
@@ -481,7 +497,7 @@
 
   function openIntake(docType, label){
     var contact=(id('ucontact').value||'').trim();
-    if(!contact){ alert('اكتب الإيميل أو الموبايل فوق الأول.'); return; }
+    if(!isValidContact(contact)){ alert('اكتب إيميل صحيح أو رقم موبايل صحيح فوق الأول.'); return; }
     id('studioStatus').textContent='';
     var fields=INTAKE[docType]||[];
     var h='<div style="border:1px solid #a7f3d0;border-radius:12px;padding:16px;margin-top:14px;background:#f0fdf4">'+

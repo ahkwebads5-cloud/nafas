@@ -143,6 +143,27 @@
     <div class="card">
       <h2>أرقامك</h2>
       <div class="lead">أرقام تقريبية كفاية.</div>
+      <label>العملة</label>
+      <select id="currency">
+        <option value="EGP" selected>جنيه مصري (EGP)</option>
+        <option value="SAR">ريال سعودي (SAR)</option>
+        <option value="AED">درهم إماراتي (AED)</option>
+        <option value="KWD">دينار كويتي (KWD)</option>
+        <option value="QAR">ريال قطري (QAR)</option>
+        <option value="BHD">دينار بحريني (BHD)</option>
+        <option value="OMR">ريال عُماني (OMR)</option>
+        <option value="JOD">دينار أردني (JOD)</option>
+        <option value="LBP">ليرة لبنانية (LBP)</option>
+        <option value="IQD">دينار عراقي (IQD)</option>
+        <option value="MAD">درهم مغربي (MAD)</option>
+        <option value="DZD">دينار جزائري (DZD)</option>
+        <option value="TND">دينار تونسي (TND)</option>
+        <option value="LYD">دينار ليبي (LYD)</option>
+        <option value="SDG">جنيه سوداني (SDG)</option>
+        <option value="YER">ريال يمني (YER)</option>
+        <option value="USD">دولار أمريكي (USD)</option>
+        <option value="EUR">يورو (EUR)</option>
+      </select>
       <label>الكاش المتاح دلوقتي <span class="hint">(اللي في إيدك)</span></label>
       <input type="number" id="cash" value="200000" min="0">
       <div class="two">
@@ -208,7 +229,9 @@
 
 <script>
   var targetM = 18;
-  var fmt = function(n){ return Math.round(n).toLocaleString('en-US') + " ج.م"; };
+  var CURSYM = { EGP:'ج.م', SAR:'ر.س', AED:'د.إ', KWD:'د.ك', QAR:'ر.ق', BHD:'د.ب', OMR:'ر.ع', JOD:'د.أ', LBP:'ل.ل', IQD:'د.ع', MAD:'د.م', DZD:'د.ج', TND:'د.ت', LYD:'د.ل', SDG:'ج.س', YER:'ر.ي', USD:'$', EUR:'€' };
+  var CUR = 'EGP';
+  var fmt = function(n){ return Math.round(n).toLocaleString('en-US') + " " + (CURSYM[CUR]||'ج.م'); };
 
   var SB_URL = "https://valjagwyzsnprixbtaiv.supabase.co";
   var SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZhbGphZ3d5enNucHJpeGJ0YWl2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODM2OTExODIsImV4cCI6MjA5OTI2NzE4Mn0.XVuQU7WicI0gQblv0F_j1oygjkfW_4RJlmbUFaH7I9Y";
@@ -296,7 +319,9 @@
     {k:'deck',t:'عرض تقديمي (Pitch Deck)'},
     {k:'emails',t:'إيميلات المستثمرين'},
     {k:'captable',t:'هيكل الملكية (Cap Table)'},
-    {k:'turnaround',t:'🚑 إنقاذ مشروع متعثّر'}
+    {k:'turnaround',t:'🚑 إنقاذ مشروع متعثّر'},
+    {k:'bizplan',t:'خطة العمل (Business Plan)'},
+    {k:'market',t:'دراسة السوق'}
   ];
   function renderStudio(){
     var c=id('studioCard'); if(!c) return;
@@ -328,7 +353,7 @@
     var out=id('freePlanOut'); out.innerHTML='<div class="hint" style="margin-top:12px;color:#047857">⏳ بنجهّز خطتك المخصّصة لمشروعك... لحظات.</div>';
     var d=LAST||{};
     fetch('/api/free-plan',{ method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ contact:contact, data:{ name:id('uname').value, sector:d.sector, stage:d.stage, country:d.country, cash:d.cash, expenses:d.exp, revenue:d.rev, growth:d.growth, targetMonths:targetM, runway:d.rw, needed:d.need } }) })
+      body:JSON.stringify({ contact:contact, data:{ name:id('uname').value, sector:d.sector, stage:d.stage, country:d.country, cash:d.cash, expenses:d.exp, revenue:d.rev, growth:d.growth, targetMonths:targetM, runway:d.rw, needed:d.need, currency:CUR } }) })
       .then(function(r){ return r.json(); })
       .then(function(res){
         if(res && res.html){ out.innerHTML='<div style="border:1px solid #a7f3d0;border-radius:12px;padding:16px;margin-top:12px;background:#f0fdf4;line-height:1.9" dir="rtl">'+res.html+'</div>'; }
@@ -377,6 +402,23 @@
       {k:'what_changed', l:'إيه اللي اتغيّر وبدأ المشكلة؟ (حدث أو قرار معيّن)', t:'text'},
       {k:'debts', l:'عليك ديون أو مستحقات متأخرة؟ (اكتب التفاصيل أو «لا»)', t:'text'},
       {k:'team', l:'حجم الفريق وأكبر المصاريف الثابتة؟', t:'text'}
+    ],
+    bizplan: [
+      {k:'product', l:'وصف المنتج/الخدمة بالتفصيل', t:'textarea'},
+      {k:'customer', l:'مين العميل المستهدف بالظبط؟', t:'text'},
+      {k:'revenue_model', l:'إزاي بتكسب فلوس؟ (نموذج الإيراد)', t:'text'},
+      {k:'price', l:'متوسط السعر؟', t:'text'},
+      {k:'competitors', l:'أهم المنافسين أو البدائل؟', t:'text'},
+      {k:'team', l:'الفريق وخبراتهم باختصار؟', t:'text'},
+      {k:'use_funds', l:'هتستخدم التمويل في إيه؟', t:'text'},
+      {k:'goals', l:'أهدافك خلال سنة؟', t:'text'}
+    ],
+    market: [
+      {k:'product', l:'المنتج/الخدمة اللي بتدرس سوقها؟', t:'textarea'},
+      {k:'customer', l:'مين العميل المستهدف؟', t:'text'},
+      {k:'market_geo', l:'السوق/المنطقة الجغرافية المستهدفة؟', t:'text'},
+      {k:'competitors', l:'أهم المنافسين اللي تعرفهم؟', t:'text'},
+      {k:'price', l:'نطاق السعر المتوقع؟', t:'text'}
     ]
   };
 
@@ -417,7 +459,7 @@
     var contact=(id('ucontact').value||'').trim();
     var st=id('studioStatus'); st.textContent='⏳ بنجهّز الملف (بيبحث ويكتب — جزء '+(section+1)+')... سيبه يخلّص، بياخد شوية.';
     fetch('/api/generate',{ method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ contact:contact, docType:a.docType, section:section, answers:a.answers, data:{ name:id('uname').value, sector:d.sector, stage:d.stage, country:d.country, cash:d.cash, expenses:d.exp, revenue:d.rev, growth:d.growth, targetMonths:targetM, runway:d.rw, needed:d.need } }) })
+      body:JSON.stringify({ contact:contact, docType:a.docType, section:section, answers:a.answers, data:{ name:id('uname').value, sector:d.sector, stage:d.stage, country:d.country, cash:d.cash, expenses:d.exp, revenue:d.rev, growth:d.growth, targetMonths:targetM, runway:d.rw, needed:d.need, currency:CUR } }) })
       .then(function(r){ return r.json(); })
       .then(function(res){
         if(res && res.html){
@@ -527,6 +569,7 @@
   var LAST = {};
 
   function calc(){
+    CUR = (id('currency') ? id('currency').value : 'EGP') || 'EGP';
     var cash=+val('cash'), exp=+val('exp'), rev=+val('rev'), growth=+val('growth');
     var stage=sel('stage'), country=sel('country'), sector=sel('sector');
 
